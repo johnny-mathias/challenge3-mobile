@@ -4,6 +4,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack'; 
 import HomeScreen from './src/screens/HomeScreen';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import MainTabs from './src/components/MainTabs';
 
 const queryClient = new QueryClient();
 
@@ -11,7 +12,7 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <NavigationContainer>
-        <HomeScreen />
+        <MainTabs />
       </NavigationContainer>
     </QueryClientProvider>
   );
