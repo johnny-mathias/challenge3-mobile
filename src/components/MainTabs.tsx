@@ -6,13 +6,19 @@ import ServicesScreen from '../screens/ServicesScreen'
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import HistoryScreen from '../screens/HistoryScreen'
 
+import { useTheme } from '../theme/ThemeProvider'
+
 const Tab = createBottomTabNavigator()
 
 export default function MainTabs() {
+
+
+const { colors } = useTheme();
+    
     return(
         <Tab.Navigator
             screenOptions={({route}) => ({
-                tabBarActiveTintColor: '#1F6AE1',
+                tabBarActiveTintColor: colors.primary,
                 tabBarInactiveTintColor: '#999',
                 tabBarLabelStyle: {fontSize: 12},
                 tabBarIcon: ({color, size}) => {
