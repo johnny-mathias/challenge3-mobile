@@ -4,9 +4,9 @@ import AccountScreen from '../screens/AccountScreen'
 import ServicesScreen from '../screens/ServicesScreen'
 
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import HistoryScreen from '../screens/HistoryScreen'
+import HistoryScreen from '../screens/HistoryScreen';
 
-import { useTheme } from '../theme/ThemeProvider'
+import { useTheme } from '../theme/ThemeProvider';
 
 const Tab = createBottomTabNavigator()
 
@@ -19,7 +19,7 @@ const { colors } = useTheme();
         <Tab.Navigator
             screenOptions={({route}) => ({
                 tabBarActiveTintColor: colors.primary,
-                tabBarInactiveTintColor: '#999',
+                tabBarInactiveTintColor: colors.text,
                 tabBarLabelStyle: {fontSize: 12},
                 tabBarIcon: ({color, size}) => {
                     let iconName: string;
