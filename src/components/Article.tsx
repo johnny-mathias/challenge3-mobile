@@ -4,7 +4,6 @@ import { themes } from '../theme/theme';
 
 
 export default function Article() {
-    const { colors } = useTheme();
     const theme = useTheme()
     const styles = createStyles(theme)
     
@@ -24,7 +23,6 @@ export default function Article() {
 
 const createStyles = (theme: (typeof themes)['light'] ) => StyleSheet.create({
     title: {
-        color: colors.text,
-        
+        color: theme.colors.text,
     },
 })

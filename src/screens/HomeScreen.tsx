@@ -1,8 +1,13 @@
 import { View, Text, StyleSheet, Image } from "react-native";
-import logo from '../../assets/clyvo-logo1.png';
+import logo from '../../assets/sb-logo.png';
 import Article from "../components/Article";
+import { themes } from "../theme/theme";
+import { useTheme } from "../theme/ThemeProvider";
 
 export default function HomeScreen() {
+    const theme = useTheme()
+    const styles = createStyles(theme)
+
   return (
     <View style={styles.container}>
 
@@ -12,10 +17,10 @@ export default function HomeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: (typeof themes)['light'] ) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.background,
     alignItems: 'center',
     justifyContent: 'center',
   },

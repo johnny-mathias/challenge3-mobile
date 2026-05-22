@@ -1,8 +1,8 @@
 //Cores Semânticas
 
 export const lightColors = {
-    background: '#FFF5E6',
-    backgroundSecondary: '#FFF',
+    background: '#FEFEFE',
+    backgroundSecondary: '#FAFAFA',
     primary: "#2FA084",
     text: "#333",
     textSecondary: "#6F6F6F",
