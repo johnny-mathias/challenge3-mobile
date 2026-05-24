@@ -22,5 +22,4 @@
 
 ---
 
-#### Sprint 1/2 Youtube Link:
-<Link>
+#### Sprint 1/2 Youtube Link: [Clique aqui](https://youtu.be/wh2CUeqV0Wo)
