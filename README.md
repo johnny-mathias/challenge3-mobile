@@ -4,3 +4,9 @@
 colors:
 https://colorhunt.co/palette/fbf5dde7e1b1306d290d530e
 https://colorhunt.co/palette/eeeeee6fcf972fa0841f6f5f
+https://colorhunt.co/palette/0000002222221dcd9f169976
+https://colorhunt.co/palette/328e6e67ae6e90c67ce1eebc
+https://colorhunt.co/palette/0a400c819067b1ab86fefae0
+https://colorhunt.co/palette/3e5f445e936c93da97e8ffd7
+https://colorhunt.co/palette/08cb00253900000000eeeeee
+https://colorhunt.co/palette/1f6f5f2fa0846fcf97eeeeee
