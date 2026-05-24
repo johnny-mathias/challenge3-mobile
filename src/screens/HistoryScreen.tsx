@@ -9,7 +9,7 @@ export default function HistoryScreen() {
 
   return (
     <View style={styles.container}>
-      <Text>History Screen</Text>
+      <Text style={styles.text}>Você ainda não possui histórico</Text>
     </View>
   )
 }
@@ -20,5 +20,10 @@ const createStyles = (theme: (typeof themes)['light'] ) => StyleSheet.create({
     backgroundColor: theme.colors.background,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  text: {
+    fontSize: 16,
+    textAlign: 'center',
+    color: theme.colors.text
   },
 });

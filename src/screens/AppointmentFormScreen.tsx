@@ -7,47 +7,40 @@ import {
   Alert,
   ScrollView,
   Modal,
-} from 'react-native';
+} from "react-native";
 
-import DateTimePicker from '@react-native-community/datetimepicker';
+import DateTimePicker from "@react-native-community/datetimepicker";
 
-import {
-  useNavigation,
-  useRoute,
-} from '@react-navigation/native';
+import { useNavigation, useRoute } from "@react-navigation/native";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useState } from "react";
 
-import { useAppointments } from '../context/AppointmentsProvider';
-import { useTheme } from '../theme/ThemeProvider';
-import animals from '../data/animals.json';
-import veterinarians from '../data/veterinarians.json';
-import appointmentTypes from '../data/appointmentTypes.json';
+import { useAppointments } from "../context/AppointmentsProvider";
+import { useTheme } from "../theme/ThemeProvider";
+import animals from "../data/animals.json";
+import veterinarians from "../data/veterinarians.json";
+import appointmentTypes from "../data/appointmentTypes.json";
 
 export default function AppointmentFormScreen() {
-  const navigation = useNavigation<any>();
   const theme = useTheme();
 
-  const route = useRoute<any>();
+  const route = useRoute();
+  const navigation = useNavigation();
 
-  const appointment =
-    route.params?.appointment ?? null;
+  const appointment = route.params?.appointment ?? null;
 
-  const {
-    createAppointment,
-    updateAppointment,
-  } = useAppointments();
+  const { createAppointment, updateAppointment } = useAppointments();
 
-  const [appointmentType, setAppointmentType] = useState('1');
-  const [scheduledStart, setScheduledStart] = useState('');
-  const [notes, setNotes] = useState('');
-  const [tAnimalId, setTAnimalId] = useState('1');
-  const [tUserProfileId, setTUserProfileId] = useState('eu');
-  const [tUserProfileId2, setTUserProfileId2] = useState('1');
+  const [appointmentType, setAppointmentType] = useState("1");
+  const [scheduledStart, setScheduledStart] = useState("");
+  const [notes, setNotes] = useState("");
+  const [tAnimalId, setTAnimalId] = useState("1");
+  const [tUserProfileId, setTUserProfileId] = useState("eu");
+  const [tUserProfileId2, setTUserProfileId2] = useState("1");
 
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [showDateTimePicker, setShowDateTimePicker] = useState(false);
-  const [dateTimeMode, setDateTimeMode] = useState<'date' | 'time'>('date');
+  const [dateTimeMode, setDateTimeMode] = useState<"date" | "time">("date");
 
   const appointmentTypeOptions = appointmentTypes.map((type) => ({
     label: type.label,
@@ -60,8 +53,8 @@ export default function AppointmentFormScreen() {
   }));
 
   const responsibleOptions = [
-    { label: 'Eu', value: 'eu' },
-    { label: 'Outra pessoa', value: 'outra_pessoa' },
+    { label: "Eu", value: "eu" },
+    { label: "Outra pessoa", value: "outra_pessoa" },
   ];
 
   const professionalOptions = veterinarians.map((vet) => ({
@@ -69,112 +62,110 @@ export default function AppointmentFormScreen() {
     value: vet.id.toString(),
   }));
 
-  useEffect(() => {
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      title: appointment == null ? "Novo Agendamento" : "Reagendar",
+    });
     if (appointment) {
-      setAppointmentType(appointment.appointmentType || '');
-      setScheduledStart(appointment.scheduledStart || '');
-      setNotes(appointment.notes || '');
-      setTAnimalId(appointment.tAnimalId?.toString() || '1');
-      setTUserProfileId(appointment.tUserProfileId?.toString() || 'eu');
-      setTUserProfileId2(appointment.tUserProfileId2?.toString() || '1');
+      setAppointmentType(appointment.appointmentType || "");
+      setScheduledStart(appointment.scheduledStart || "");
+      setNotes(appointment.notes || "");
+      setTAnimalId(appointment.tAnimalId?.toString() || "1");
+      setTUserProfileId(appointment.tUserProfileId?.toString() || "eu");
+      setTUserProfileId2(appointment.tUserProfileId2?.toString() || "1");
     }
   }, []);
 
   const handleDateTimePicker = (event: any, selectedDate: any) => {
-    if (event.type === 'dismissed') {
+    if (event.type === "dismissed") {
       setShowDateTimePicker(false);
       return;
     }
 
-    if (dateTimeMode === 'date' && selectedDate) {
-      const currentDate = scheduledStart ? new Date(scheduledStart) : new Date();
-      selectedDate.setHours(
-        currentDate.getHours(),
-        currentDate.getMinutes()
-      );
+    if (dateTimeMode === "date" && selectedDate) {
+      const currentDate = scheduledStart
+        ? new Date(scheduledStart)
+        : new Date();
+      selectedDate.setHours(currentDate.getHours(), currentDate.getMinutes());
       setScheduledStart(selectedDate.toISOString());
-      setDateTimeMode('time');
-    } else if (dateTimeMode === 'time' && selectedDate) {
+      setDateTimeMode("time");
+    } else if (dateTimeMode === "time" && selectedDate) {
       const currentDate = new Date(scheduledStart || selectedDate);
       selectedDate.setFullYear(
         currentDate.getFullYear(),
         currentDate.getMonth(),
-        currentDate.getDate()
+        currentDate.getDate(),
       );
       setScheduledStart(selectedDate.toISOString());
       setShowDateTimePicker(false);
-      setDateTimeMode('date');
+      setDateTimeMode("date");
     }
   };
 
   const openDateTimePicker = () => {
-    setDateTimeMode('date');
+    setDateTimeMode("date");
     setShowDateTimePicker(true);
   };
 
   function getAnimalLabel() {
     return (
-      animalOptions.find(
-        (opt) => opt.value === tAnimalId
-      )?.label || 'Selecione um animal'
+      animalOptions.find((opt) => opt.value === tAnimalId)?.label ||
+      "Selecione um animal"
     );
   }
 
   function getAppointmentTypeLabel() {
     return (
-      appointmentTypeOptions.find(
-        (opt) => opt.value === appointmentType
-      )?.label || 'Selecione um tipo'
+      appointmentTypeOptions.find((opt) => opt.value === appointmentType)
+        ?.label || "Selecione um tipo"
     );
   }
 
   function getResponsibleLabel() {
     return (
-      responsibleOptions.find(
-        (opt) => opt.value === tUserProfileId
-      )?.label || 'Selecione'
+      responsibleOptions.find((opt) => opt.value === tUserProfileId)?.label ||
+      "Selecione"
     );
   }
 
   function getProfessionalLabel() {
     return (
-      professionalOptions.find(
-        (opt) => opt.value === tUserProfileId2
-      )?.label || 'Selecione um profissional'
+      professionalOptions.find((opt) => opt.value === tUserProfileId2)?.label ||
+      "Selecione um profissional"
     );
   }
 
   function formatDateTime(isoString: string) {
-    if (!isoString) return 'Selecionar data e hora';
+    if (!isoString) return "Selecionar data e hora";
     const date = new Date(isoString);
-    return date.toLocaleString('pt-BR');
+    return date.toLocaleString("pt-BR");
   }
 
   function handleSave() {
-    if (!appointmentType || appointmentType === '0') {
-      Alert.alert('Atenção', 'Tipo de atendimento é obrigatório');
+    if (!appointmentType || appointmentType === "0") {
+      Alert.alert("Atenção", "Tipo de atendimento é obrigatório");
       return;
     }
 
     if (!scheduledStart.trim()) {
-      Alert.alert('Atenção', 'Data/hora de início é obrigatória');
+      Alert.alert("Atenção", "Data/hora de início é obrigatória");
       return;
     }
 
     const appointmentTypeLabel = appointmentTypeOptions.find(
-      (opt) => opt.value === appointmentType
+      (opt) => opt.value === appointmentType,
     )?.label;
 
     const payload = {
       ...(appointment || {}),
       id: appointment?.id || Date.now(),
       appointmentType: appointmentTypeLabel,
-      status: 'Agendado',
+      status: "Agendado",
       scheduledStart,
       price: 100,
       notes: notes || undefined,
       tAnimalId: parseInt(tAnimalId),
-      tUserProfileId: tUserProfileId === 'eu' ? 1 : 2,
+      tUserProfileId: tUserProfileId === "eu" ? 1 : 2,
       tUserProfileId2: parseInt(tUserProfileId2),
     };
 
@@ -186,7 +177,7 @@ export default function AppointmentFormScreen() {
       }
       navigation.goBack();
     } catch (error) {
-      Alert.alert('Erro', 'Não foi possível salvar o agendamento');
+      Alert.alert("Erro", "Não foi possível salvar o agendamento");
     }
   }
 
@@ -201,7 +192,7 @@ export default function AppointmentFormScreen() {
       sectionTitle: {
         fontSize: 12,
         color: theme.colors.textSecondary,
-        fontWeight: '600',
+        fontWeight: "600",
         marginTop: 16,
         marginBottom: 8,
       },
@@ -216,7 +207,7 @@ export default function AppointmentFormScreen() {
 
       textArea: {
         height: 120,
-        textAlignVertical: 'top',
+        textAlignVertical: "top",
         marginBottom: 24,
       },
 
@@ -225,9 +216,9 @@ export default function AppointmentFormScreen() {
         borderRadius: 8,
         padding: 12,
         marginBottom: 20,
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
       },
 
       dropdownText: {
@@ -254,17 +245,17 @@ export default function AppointmentFormScreen() {
 
       modalOverlay: {
         flex: 1,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        justifyContent: 'center',
-        alignItems: 'center',
+        backgroundColor: "rgba(0, 0, 0, 0.5)",
+        justifyContent: "center",
+        alignItems: "center",
       },
 
       dropdownMenu: {
         backgroundColor: theme.colors.background,
         borderRadius: 12,
-        width: '80%',
-        maxHeight: '70%',
-        overflow: 'hidden',
+        width: "80%",
+        maxHeight: "70%",
+        overflow: "hidden",
       },
 
       dropdownItem: {
@@ -280,7 +271,7 @@ export default function AppointmentFormScreen() {
       },
 
       selectedItemText: {
-        fontWeight: 'bold',
+        fontWeight: "bold",
         color: theme.colors.primary,
       },
 
@@ -293,9 +284,9 @@ export default function AppointmentFormScreen() {
       },
 
       buttonText: {
-        color: 'white',
-        textAlign: 'center',
-        fontWeight: 'bold',
+        color: "white",
+        textAlign: "center",
+        fontWeight: "bold",
         fontSize: 16,
       },
     });
@@ -306,25 +297,17 @@ export default function AppointmentFormScreen() {
     <>
       <ScrollView style={styles.container}>
         {/* Tipo de Atendimento */}
-        <Text style={styles.sectionTitle}>
-          TIPO DE ATENDIMENTO
-        </Text>
+        <Text style={styles.sectionTitle}>TIPO DE ATENDIMENTO</Text>
         <TouchableOpacity
           style={styles.dropdownButton}
-          onPress={() =>
-            setOpenDropdown('appointmentType')
-          }
+          onPress={() => setOpenDropdown("appointmentType")}
         >
-          <Text style={styles.dropdownText}>
-            {getAppointmentTypeLabel()}
-          </Text>
+          <Text style={styles.dropdownText}>{getAppointmentTypeLabel()}</Text>
           <Text style={styles.dropdownArrow}>▼</Text>
         </TouchableOpacity>
 
         {/* Data e Hora de Início */}
-        <Text style={styles.sectionTitle}>
-          DATA E HORA DE INÍCIO
-        </Text>
+        <Text style={styles.sectionTitle}>DATA E HORA DE INÍCIO</Text>
         <TouchableOpacity
           style={styles.dateButton}
           onPress={openDateTimePicker}
@@ -338,50 +321,34 @@ export default function AppointmentFormScreen() {
         <Text style={styles.sectionTitle}>ANIMAL</Text>
         <TouchableOpacity
           style={styles.dropdownButton}
-          onPress={() => setOpenDropdown('animal')}
+          onPress={() => setOpenDropdown("animal")}
         >
-          <Text style={styles.dropdownText}>
-            {getAnimalLabel()}
-          </Text>
+          <Text style={styles.dropdownText}>{getAnimalLabel()}</Text>
           <Text style={styles.dropdownArrow}>▼</Text>
         </TouchableOpacity>
 
         {/* Responsável */}
-        <Text style={styles.sectionTitle}>
-          RESPONSÁVEL
-        </Text>
+        <Text style={styles.sectionTitle}>RESPONSÁVEL</Text>
         <TouchableOpacity
           style={styles.dropdownButton}
-          onPress={() =>
-            setOpenDropdown('responsible')
-          }
+          onPress={() => setOpenDropdown("responsible")}
         >
-          <Text style={styles.dropdownText}>
-            {getResponsibleLabel()}
-          </Text>
+          <Text style={styles.dropdownText}>{getResponsibleLabel()}</Text>
           <Text style={styles.dropdownArrow}>▼</Text>
         </TouchableOpacity>
 
         {/* Profissional */}
-        <Text style={styles.sectionTitle}>
-          PROFISSIONAL
-        </Text>
+        <Text style={styles.sectionTitle}>PROFISSIONAL</Text>
         <TouchableOpacity
           style={styles.dropdownButton}
-          onPress={() =>
-            setOpenDropdown('professional')
-          }
+          onPress={() => setOpenDropdown("professional")}
         >
-          <Text style={styles.dropdownText}>
-            {getProfessionalLabel()}
-          </Text>
+          <Text style={styles.dropdownText}>{getProfessionalLabel()}</Text>
           <Text style={styles.dropdownArrow}>▼</Text>
         </TouchableOpacity>
 
         {/* Observações */}
-        <Text style={styles.sectionTitle}>
-          OBSERVAÇÕES (OPCIONAL)
-        </Text>
+        <Text style={styles.sectionTitle}>OBSERVAÇÕES (OPCIONAL)</Text>
         <TextInput
           style={[styles.input, styles.textArea]}
           value={notes}
@@ -389,26 +356,19 @@ export default function AppointmentFormScreen() {
           multiline
           textAlignVertical="top"
           placeholder="Digite qualquer observação relevante"
-          placeholderTextColor={
-            theme.colors.textPlaceholder
-          }
+          placeholderTextColor={theme.colors.textPlaceholder}
         />
 
-        <TouchableOpacity
-          style={styles.button}
-          onPress={handleSave}
-        >
+        <TouchableOpacity style={styles.button} onPress={handleSave}>
           <Text style={styles.buttonText}>
-            {appointment
-              ? 'Salvar alterações'
-              : 'Criar agendamento'}
+            {appointment ? "Salvar alterações" : "Criar agendamento"}
           </Text>
         </TouchableOpacity>
       </ScrollView>
 
       {/* Appointment Type Dropdown Modal */}
       <Modal
-        visible={openDropdown === 'appointmentType'}
+        visible={openDropdown === "appointmentType"}
         transparent
         animationType="fade"
         onRequestClose={() => setOpenDropdown(null)}
@@ -431,8 +391,7 @@ export default function AppointmentFormScreen() {
                 <Text
                   style={[
                     styles.dropdownItemText,
-                    appointmentType === option.value &&
-                      styles.selectedItemText,
+                    appointmentType === option.value && styles.selectedItemText,
                   ]}
                 >
                   {option.label}
@@ -445,7 +404,7 @@ export default function AppointmentFormScreen() {
 
       {/* Animal Dropdown Modal */}
       <Modal
-        visible={openDropdown === 'animal'}
+        visible={openDropdown === "animal"}
         transparent
         animationType="fade"
         onRequestClose={() => setOpenDropdown(null)}
@@ -468,8 +427,7 @@ export default function AppointmentFormScreen() {
                 <Text
                   style={[
                     styles.dropdownItemText,
-                    tAnimalId === option.value &&
-                      styles.selectedItemText,
+                    tAnimalId === option.value && styles.selectedItemText,
                   ]}
                 >
                   {option.label}
@@ -482,7 +440,7 @@ export default function AppointmentFormScreen() {
 
       {/* Responsible Profile Dropdown Modal */}
       <Modal
-        visible={openDropdown === 'responsible'}
+        visible={openDropdown === "responsible"}
         transparent
         animationType="fade"
         onRequestClose={() => setOpenDropdown(null)}
@@ -505,8 +463,7 @@ export default function AppointmentFormScreen() {
                 <Text
                   style={[
                     styles.dropdownItemText,
-                    tUserProfileId === option.value &&
-                      styles.selectedItemText,
+                    tUserProfileId === option.value && styles.selectedItemText,
                   ]}
                 >
                   {option.label}
@@ -519,7 +476,7 @@ export default function AppointmentFormScreen() {
 
       {/* Professional Profile Dropdown Modal */}
       <Modal
-        visible={openDropdown === 'professional'}
+        visible={openDropdown === "professional"}
         transparent
         animationType="fade"
         onRequestClose={() => setOpenDropdown(null)}
@@ -542,8 +499,7 @@ export default function AppointmentFormScreen() {
                 <Text
                   style={[
                     styles.dropdownItemText,
-                    tUserProfileId2 === option.value &&
-                      styles.selectedItemText,
+                    tUserProfileId2 === option.value && styles.selectedItemText,
                   ]}
                 >
                   {option.label}
@@ -560,7 +516,7 @@ export default function AppointmentFormScreen() {
           value={scheduledStart ? new Date(scheduledStart) : new Date()}
           mode={dateTimeMode}
           display="spinner"
-          onChange={handleDateTimePicker}
+          onValueChange={handleDateTimePicker}
         />
       )}
     </>

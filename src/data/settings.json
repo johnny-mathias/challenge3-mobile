@@ -1,0 +1,25 @@
+{
+    "settings": [
+        {
+            "id": "theme",
+            "name": "Tema",
+            "type": "select",
+            "values": ["light", "dark"],
+            "default": "light"
+        },
+        {
+            "id": "notifications",
+            "name": "Notificações",
+            "type": "boolean",
+            "default": true
+        },
+        {
+            "id": "language",
+            "name": "Idioma",
+            "type": "select",
+            "values": ["en", "pt"],
+            "default": "en"
+        }
+    ]
+
+}

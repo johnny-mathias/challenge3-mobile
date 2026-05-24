@@ -1,18 +1,55 @@
-import { PropsWithChildren, createContext, useContext } from 'react'
-import { useColorScheme } from 'react-native'
-import { themes } from './theme'
+import {
+  PropsWithChildren,
+  createContext,
+  useContext,
+  useState,
+} from 'react';
 
-const ThemeContext = createContext(themes.light)
+import { themes } from './theme';
 
-export const ThemeProvider = ({ children }: PropsWithChildren) => {
-    const scheme = useColorScheme()
-    const theme = scheme === 'dark' ? themes.dark : themes.light
+type ThemeName = 'light' | 'dark';
 
-    return(
-        <ThemeContext.Provider value={theme}>
-            {children}
-        </ThemeContext.Provider>
-    )
+const ThemeContext = createContext(themes.light);
+
+interface ThemeControllerData {
+  themeName: ThemeName;
+
+  toggleTheme: () => void;
 }
 
-export const useTheme = () => useContext(ThemeContext)
+const ThemeControllerContext =
+  createContext({} as ThemeControllerData);
+
+export const ThemeProvider = ({
+  children,
+}: PropsWithChildren) => {
+  const [themeName, setThemeName] =
+    useState<ThemeName>('light');
+
+  const toggleTheme = () => {
+    setThemeName((prev) =>
+      prev === 'light' ? 'dark' : 'light'
+    );
+  };
+
+  const theme = themes[themeName];
+
+  return (
+    <ThemeControllerContext.Provider
+      value={{
+        themeName,
+        toggleTheme,
+      }}
+    >
+      <ThemeContext.Provider value={theme}>
+        {children}
+      </ThemeContext.Provider>
+    </ThemeControllerContext.Provider>
+  );
+};
+
+export const useTheme = () =>
+  useContext(ThemeContext);
+
+export const useThemeController = () =>
+  useContext(ThemeControllerContext);

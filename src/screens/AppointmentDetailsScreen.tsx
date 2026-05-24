@@ -14,8 +14,12 @@ import animals from '../data/animals.json';
 import veterinarians from '../data/veterinarians.json';
 
 import { useAppointments } from '../context/AppointmentsProvider';
+import { useTheme } from '../theme/ThemeProvider';
+import { themes } from '../theme/theme';
 
 export default function AppointmentDetailsScreen() {
+    const theme = useTheme();
+    const styles = createStyles(theme);
   const route = useRoute<any>();
 
   const navigation = useNavigation<any>();
@@ -45,20 +49,24 @@ export default function AppointmentDetailsScreen() {
             Pet
           </Text>
 
-          <Text>{animal?.name}</Text>
+          <Text style={styles.text}>
+            {animal?.name}
+          </Text>
 
           <Text style={styles.label}>
             Veterinário
           </Text>
 
-          <Text>{veterinarian?.name}</Text>
+          <Text style={styles.text}>
+            {veterinarian?.name}
+          </Text>
 
           <Text style={styles.label}>
             Observações
           </Text>
 
-          <Text>
-            {appointment.notes || 'Sem observações'}
+          <Text style={styles.text}>
+            {appointment.notes && appointment.notes !== "" ? appointment.notes : 'Sem observações'}
           </Text>
         </View>
 
@@ -74,7 +82,7 @@ export default function AppointmentDetailsScreen() {
           }
         >
           <Text style={styles.buttonText}>
-            Editar
+            Reagendar
           </Text>
         </TouchableOpacity>
 
@@ -87,22 +95,23 @@ export default function AppointmentDetailsScreen() {
           }}
         >
           <Text style={styles.buttonText}>
-            Excluir
+            Cancelar
           </Text>
         </TouchableOpacity>
       </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f2f2f2',
-    padding: 20,
-  },
+const createStyles = (theme: (typeof themes)["light"]) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.colors.background,
+      padding: 20,
+    },
 
   card: {
-    backgroundColor: 'white',
+    backgroundColor: theme.colors.backgroundSecondary,
     padding: 20,
     borderRadius: 12,
     marginBottom: 14,
@@ -112,6 +121,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 10,
+    color: theme.colors.text,
   },
 
   label: {
@@ -119,10 +129,16 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginTop: 10,
     marginBottom: 5,
+    color: theme.colors.text,
+  },
+
+  text: {
+    fontSize: 16,
+    color: theme.colors.textSecondary,
   },
 
   editButton: {
-    backgroundColor: '#2d7df6',
+    backgroundColor: theme.colors.blue1,
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 8,
@@ -130,7 +146,7 @@ const styles = StyleSheet.create({
   },
 
   deleteButton: {
-    backgroundColor: '#ff4d4d',
+    backgroundColor: theme.colors.remove,
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 8,

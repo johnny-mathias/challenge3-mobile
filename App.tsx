@@ -34,7 +34,7 @@ function AppContent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AppointmentsProvider>  
+      <AppointmentsProvider>
         <NavigationContainer>
           <SafeAreaProvider>
             <Stack.Navigator initialRouteName="MainTabs">
@@ -71,8 +71,18 @@ function AppContent() {
                 component={ArticleDetailsScreen}
                 options={({ navigation }) => ({
                   headerBackButtonDisplayMode: "minimal",
+                  headerTintColor: theme.colors.text,
+
 
                   title: "",
+                  headerTitleStyle: {
+                    color: theme.colors.text,
+                  },
+                  headerShown: true,
+                  headerStyle: {
+                    backgroundColor: theme.colors.backgroundSecondary,
+                    borderBottomColor: theme.colors.border,
+                  },
 
                   headerRight: () => (
                     <TouchableOpacity onPress={() => navigation.popToTop()}>
@@ -84,11 +94,37 @@ function AppContent() {
               <Stack.Screen
                 name="AppointmentDetailsScreen"
                 component={AppointmentDetailsScreen}
+                options={({ navigation }) => ({
+                  headerBackButtonDisplayMode: "minimal",
+                  headerTintColor: theme.colors.text,
+                  title: "Mais informações",
+                  headerTitleStyle: {
+                    color: theme.colors.text,
+                  },
+                  headerShown: true,
+                  headerStyle: {
+                    backgroundColor: theme.colors.backgroundSecondary,
+                    borderBottomColor: theme.colors.border,
+                  },
+                })}
               />
 
               <Stack.Screen
                 name="AppointmentFormScreen"
                 component={AppointmentFormScreen}
+                options={({ navigation }) => ({
+                  headerBackButtonDisplayMode: "minimal",
+                  headerTintColor: theme.colors.text,
+                  title: "Mais informações",
+                  headerTitleStyle: {
+                    color: theme.colors.text,
+                  },
+                  headerShown: true,
+                  headerStyle: {
+                    backgroundColor: theme.colors.backgroundSecondary,
+                    borderBottomColor: theme.colors.border,
+                  },
+                })}
               />
             </Stack.Navigator>
           </SafeAreaProvider>

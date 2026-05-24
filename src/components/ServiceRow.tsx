@@ -63,7 +63,7 @@ export default function ServiceRow({ appointment }: any) {
 const createStyles = (theme: (typeof themes)["light"]) =>
   StyleSheet.create({
     container: {
-      backgroundColor: "white",
+      backgroundColor: theme.colors.backgroundSecondary,
       padding: 18,
       borderRadius: 12,
       flexDirection: "row",
@@ -75,11 +75,12 @@ const createStyles = (theme: (typeof themes)["light"]) =>
     title: {
       fontSize: 18,
       fontWeight: "bold",
+      color: theme.colors.text,
     },
 
     subtitle: {
       marginTop: 6,
-      color: "#666",
+      color: theme.colors.textSecondary,
     },
 
     rightArea: {
@@ -88,11 +89,13 @@ const createStyles = (theme: (typeof themes)["light"]) =>
 
     date: {
       fontSize: 13,
+      color: theme.colors.text,
     },
 
     time: {
       fontSize: 13,
       marginBottom: 10,
+      color: theme.colors.text,
     },
 
     button: {
