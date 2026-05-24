@@ -1,0 +1,18 @@
+[
+  {
+    "id": 1,
+    "label": "Consulta Clínica"
+  },
+  {
+    "id": 2,
+    "label": "Vacinação"
+  },
+  {
+    "id": 3,
+    "label": "Cirurgia"
+  },
+  {
+    "id": 4,
+    "label": "Banho e Tosa"
+  }
+]

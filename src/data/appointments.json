@@ -1,0 +1,20 @@
+[
+  {
+    "id": 1,
+    "appointmentType": "Vacinação",
+    "status": "scheduled",
+    "scheduledStart": "2026-05-25T09:00:00",
+    "notes": "Aplicar vacina V10",
+    "animalId": 1,
+    "veterinarianId": 2
+  },
+  {
+    "id": 2,
+    "appointmentType": "Consulta Geral",
+    "status": "scheduled",
+    "scheduledStart": "2026-05-27T14:00:00",
+    "notes": "Avaliar alimentação",
+    "animalId": 2,
+    "veterinarianId": 1
+  }
+]
