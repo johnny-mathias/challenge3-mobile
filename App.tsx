@@ -60,7 +60,7 @@ function AppContent() {
                         }}
                       />
 
-                      <Text style={styles.headerListTitle}>AdotePet</Text>
+                      <Text style={styles.headerListTitle}>SuperBicho</Text>
                     </View>
                   ),
                 }}
