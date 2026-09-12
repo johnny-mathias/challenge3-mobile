@@ -4,7 +4,7 @@ import { Swipeable } from "react-native-gesture-handler";
 
 import { useNavigation } from "@react-navigation/native";
 
-import animals from "../data/animals.json";
+import { useAnimals } from "../hooks/queries";
 
 import { useTheme } from "../theme/ThemeProvider";
 import { themes } from "../theme/theme";
@@ -13,6 +13,8 @@ export default function ServiceRow({ appointment }: any) {
   const theme = useTheme();
   const styles = createStyles(theme);
   const navigation = useNavigation<any>();
+
+  const { data: animals = [] } = useAnimals();
 
   const animal = animals.find((item) => item.id === appointment.tAnimalId);
 

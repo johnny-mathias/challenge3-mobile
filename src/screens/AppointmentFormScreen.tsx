@@ -17,9 +17,11 @@ import { useEffect, useLayoutEffect, useState } from "react";
 
 import { useAppointments } from "../context/AppointmentsProvider";
 import { useTheme } from "../theme/ThemeProvider";
-import animals from "../data/animals.json";
-import veterinarians from "../data/veterinarians.json";
-import appointmentTypes from "../data/appointmentTypes.json";
+import {
+  useAnimals,
+  useAppointmentTypes,
+  useVeterinarians,
+} from "../hooks/queries";
 
 export default function AppointmentFormScreen() {
   const theme = useTheme();
@@ -30,6 +32,10 @@ export default function AppointmentFormScreen() {
   const appointment = route.params?.appointment ?? null;
 
   const { createAppointment, updateAppointment } = useAppointments();
+
+  const { data: animals = [] } = useAnimals();
+  const { data: veterinarians = [] } = useVeterinarians();
+  const { data: appointmentTypes = [] } = useAppointmentTypes();
 
   const [appointmentType, setAppointmentType] = useState("1");
   const [scheduledStart, setScheduledStart] = useState("");

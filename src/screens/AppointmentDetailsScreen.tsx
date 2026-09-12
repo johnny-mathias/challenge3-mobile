@@ -10,8 +10,7 @@ import {
   useRoute,
 } from '@react-navigation/native';
 
-import animals from '../data/animals.json';
-import veterinarians from '../data/veterinarians.json';
+import { useAnimals, useVeterinarians } from '../hooks/queries';
 
 import { useAppointments } from '../context/AppointmentsProvider';
 import { useTheme } from '../theme/ThemeProvider';
@@ -26,6 +25,9 @@ export default function AppointmentDetailsScreen() {
 
   const { deleteAppointment } =
     useAppointments();
+
+  const { data: animals = [] } = useAnimals();
+  const { data: veterinarians = [] } = useVeterinarians();
 
   const { appointment } = route.params;
 

@@ -1,21 +1,26 @@
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-} from 'react';
+import { createContext, useContext } from 'react';
 
-import appointmentsJson from '../data/appointments.json';
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 
 import type { Appointment } from '../types/appointment.types';
 
 import {
-  loadAppointments,
-  saveAppointments,
-} from '../storage/appointments.storage';
+  createAppointment as createAppointmentRequest,
+  deleteAppointment as deleteAppointmentRequest,
+  getAppointments,
+  updateAppointment as updateAppointmentRequest,
+} from '../api/appointments.api';
+
+const APPOINTMENTS_KEY = ['appointments'];
 
 interface AppointmentsContextData {
   appointments: Appointment[];
+  isLoading: boolean;
+  isError: boolean;
 
   createAppointment: (data: Appointment) => void;
 
@@ -30,62 +35,45 @@ const AppointmentsContext =
   );
 
 export function AppointmentsProvider({ children }: any) {
-  const [appointments, setAppointments] =
-    useState<Appointment[]>([]);
+  const queryClient = useQueryClient();
 
-  async function initialize() {
-    const storageData = await loadAppointments();
+  const {
+    data: appointments = [],
+    isLoading,
+    isError,
+  } = useQuery({
+    queryKey: APPOINTMENTS_KEY,
+    queryFn: getAppointments,
+  });
 
-    if (storageData) {
-      setAppointments(storageData);
-    } else {
-      setAppointments(appointmentsJson);
-      saveAppointments(appointmentsJson);
-    }
+  function invalidate() {
+    queryClient.invalidateQueries({ queryKey: APPOINTMENTS_KEY });
   }
 
-  useEffect(() => {
-    initialize();
-  }, []);
+  const createMutation = useMutation({
+    mutationFn: createAppointmentRequest,
+    onSuccess: invalidate,
+  });
 
-  async function createAppointment(
-    data: Appointment
-  ) {
-    const updated = [...appointments, data];
+  const updateMutation = useMutation({
+    mutationFn: updateAppointmentRequest,
+    onSuccess: invalidate,
+  });
 
-    setAppointments(updated);
-
-    await saveAppointments(updated);
-  }
-
-  async function updateAppointment(
-    data: Appointment
-  ) {
-    const updated = appointments.map((item) =>
-      item.id === data.id ? data : item
-    );
-
-    setAppointments(updated);
-
-    await saveAppointments(updated);
-  }
-
-  async function deleteAppointment(id: number) {
-    const updated = appointments.filter((item) => item.id !== id
-    );
-
-    setAppointments(updated);
-
-    await saveAppointments(updated);
-  }
+  const deleteMutation = useMutation({
+    mutationFn: deleteAppointmentRequest,
+    onSuccess: invalidate,
+  });
 
   return (
     <AppointmentsContext.Provider
       value={{
         appointments,
-        createAppointment,
-        updateAppointment,
-        deleteAppointment,
+        isLoading,
+        isError,
+        createAppointment: (data) => createMutation.mutate(data),
+        updateAppointment: (data) => updateMutation.mutate(data),
+        deleteAppointment: (id) => deleteMutation.mutate(id),
       }}
     >
       {children}
@@ -95,4 +83,4 @@ export function AppointmentsProvider({ children }: any) {
 
 export function useAppointments() {
   return useContext(AppointmentsContext);
-}   
+}

@@ -2,9 +2,7 @@ import { FlatList, StyleSheet, View } from "react-native";
 
 import SettingsRow from "../components/SettingsRow";
 
-import settingsJson from "../data/settings.json";
-
-import { Setting } from "../types/settings.types";
+import { useSettings } from "../hooks/queries";
 
 import { useTheme, useThemeController } from "../theme/ThemeProvider";
 import { themes } from "../theme/theme";
@@ -14,7 +12,7 @@ export default function AccountScreen() {
 
   const styles = createStyles(theme);
 
-  const settings = settingsJson.settings as Setting[];
+  const { data: settings = [] } = useSettings();
 
   const { toggleTheme } =
   useThemeController();
