@@ -1,4 +1,5 @@
 import {
+  ActivityIndicator,
   Text,
   View,
   StyleSheet,
@@ -23,7 +24,7 @@ const { width } = Dimensions.get("window");
 
 export default function HomeScreen() {
   const navigation = useNavigation();
-  const { appointments } = useAppointments();
+  const { appointments, isLoading, isError } = useAppointments();
   const theme = useTheme();
   const styles = createStyles(theme);
 
@@ -54,14 +55,25 @@ export default function HomeScreen() {
 
       <View style={styles.appointmentsContainer}>
         <Text style={styles.appointmentsTitle}>Agendamentos</Text>
-        <FlatList
-          scrollEnabled={false}
-          contentContainerStyle={{
-          }}
-          data={appointments}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={({ item }) => <ServiceRow appointment={item} />}
-        />
+
+        {isLoading && (
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+        )}
+
+        {isError && (
+          <Text style={styles.errorText}>Não foi possível carregar seus agendamentos</Text>
+        )}
+
+        {!isLoading && !isError && (
+          <FlatList
+            scrollEnabled={false}
+            contentContainerStyle={{
+            }}
+            data={appointments}
+            keyExtractor={(item) => item.id.toString()}
+            renderItem={({ item }) => <ServiceRow appointment={item} />}
+          />
+        )}
       </View>
     </ScrollView>
   );
@@ -80,6 +92,11 @@ const createStyles = (theme: (typeof themes)["light"]) =>
       marginBottom: 12,
       textAlign: "center",
       color: theme.colors.primary,
+    },
+    errorText: {
+      color: theme.colors.textSecondary,
+      fontSize: 15,
+      textAlign: "center",
     },
     container: {
       flex: 1,

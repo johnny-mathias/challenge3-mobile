@@ -1,4 +1,5 @@
 import {
+  ActivityIndicator,
   View,
   FlatList,
   StyleSheet,
@@ -18,7 +19,23 @@ export default function ServicesScreen() {
   const styles = createStyles(theme);
   const navigation = useNavigation();
 
-  const { appointments } = useAppointments();
+  const { appointments, isLoading, isError } = useAppointments();
+
+  if (isLoading) {
+    return (
+      <View style={styles.centered}>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
+      </View>
+    );
+  }
+
+  if (isError) {
+    return (
+      <View style={styles.centered}>
+        <Text style={styles.errorText}>Não foi possível carregar seus agendamentos</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -46,6 +63,18 @@ const createStyles = (theme: (typeof themes)["light"]) =>
     container: {
       flex: 1,
       backgroundColor: theme.colors.background,
+    },
+
+    centered: {
+      flex: 1,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: theme.colors.background,
+    },
+
+    errorText: {
+      color: theme.colors.textSecondary,
+      fontSize: 15,
     },
 
     fab: {
