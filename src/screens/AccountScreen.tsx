@@ -1,9 +1,12 @@
-import { FlatList, StyleSheet, View } from "react-native";
+import { FlatList, StyleSheet, Text, View } from "react-native";
 
 import SettingsRow from "../components/SettingsRow";
 
-import { useSettings } from "../hooks/queries";
+import settingsJson from "../data/settings.json";
 
+import { Setting } from "../types/settings.types";
+
+import { useAuth } from "../context/AuthProvider";
 import { useTheme, useThemeController } from "../theme/ThemeProvider";
 import { themes } from "../theme/theme";
 
@@ -12,13 +15,22 @@ export default function AccountScreen() {
 
   const styles = createStyles(theme);
 
-  const { data: settings = [] } = useSettings();
+  const settings = settingsJson.settings as Setting[];
 
   const { toggleTheme } =
   useThemeController();
 
+  const { guardian, logout } = useAuth();
+
   return (
     <View style={styles.container}>
+      {guardian && (
+        <View style={styles.profile}>
+          <Text style={styles.profileName}>{guardian.name}</Text>
+          <Text style={styles.profileEmail}>{guardian.email}</Text>
+        </View>
+      )}
+
       <FlatList
         data={settings}
         keyExtractor={(item) => item.id}
@@ -34,6 +46,8 @@ export default function AccountScreen() {
           />
         )}
       />
+
+      <SettingsRow title="Sair" value="" onPress={logout} />
     </View>
   );
 }
@@ -43,5 +57,21 @@ const createStyles = (theme: (typeof themes)["light"]) =>
     container: {
       flex: 1,
       backgroundColor: theme.colors.background,
+    },
+
+    profile: {
+      padding: 20,
+    },
+
+    profileName: {
+      fontSize: 20,
+      fontWeight: "bold",
+      color: theme.colors.text,
+    },
+
+    profileEmail: {
+      fontSize: 14,
+      color: theme.colors.textSecondary,
+      marginTop: 4,
     },
   });

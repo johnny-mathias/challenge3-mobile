@@ -1,330 +1,138 @@
 import {
-  View,
-  Text,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
   Alert,
-  ScrollView,
   Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 import DateTimePicker from "@react-native-community/datetimepicker";
 
 import { useNavigation, useRoute } from "@react-navigation/native";
 
-import { useEffect, useLayoutEffect, useState } from "react";
+import { useLayoutEffect, useState } from "react";
 
 import { useAppointments } from "../context/AppointmentsProvider";
 import { useTheme } from "../theme/ThemeProvider";
-import {
-  useAnimals,
-  useAppointmentTypes,
-  useVeterinarians,
-} from "../hooks/queries";
+import { useApprovedClinics, useMyAnimals } from "../hooks/queries";
+
+import type { AppointmentDTO } from "../types/api.types";
 
 export default function AppointmentFormScreen() {
   const theme = useTheme();
 
-  const route = useRoute();
-  const navigation = useNavigation();
+  const route = useRoute<any>();
+  const navigation = useNavigation<any>();
 
-  const appointment = route.params?.appointment ?? null;
+  const appointment: AppointmentDTO | undefined = route.params?.appointment;
 
-  const { createAppointment, updateAppointment } = useAppointments();
+  const { createAppointment, updateAppointment, deleteAppointment } = useAppointments();
 
-  const { data: animals = [] } = useAnimals();
-  const { data: veterinarians = [] } = useVeterinarians();
-  const { data: appointmentTypes = [] } = useAppointmentTypes();
+  const { data: animals = [] } = useMyAnimals();
+  const { data: clinics = [] } = useApprovedClinics();
 
-  const [appointmentType, setAppointmentType] = useState("1");
-  const [scheduledStart, setScheduledStart] = useState("");
-  const [notes, setNotes] = useState("");
-  const [tAnimalId, setTAnimalId] = useState("1");
-  const [tUserProfileId, setTUserProfileId] = useState("eu");
-  const [tUserProfileId2, setTUserProfileId2] = useState("1");
+  const [animalId, setAnimalId] = useState(
+    appointment?.animalId?.toString() ?? "",
+  );
+  const [clinicId, setClinicId] = useState(
+    appointment?.clinicId?.toString() ?? "",
+  );
+  const [date, setDate] = useState<Date>(
+    appointment ? new Date(`${appointment.date}T${appointment.time}`) : new Date(),
+  );
 
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
-  const [showDateTimePicker, setShowDateTimePicker] = useState(false);
-  const [dateTimeMode, setDateTimeMode] = useState<"date" | "time">("date");
-
-  const appointmentTypeOptions = appointmentTypes.map((type) => ({
-    label: type.label,
-    value: type.id.toString(),
-  }));
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
 
   const animalOptions = animals.map((animal) => ({
     label: `${animal.name} (${animal.species})`,
     value: animal.id.toString(),
   }));
 
-  const responsibleOptions = [
-    { label: "Eu", value: "eu" },
-    { label: "Outra pessoa", value: "outra_pessoa" },
-  ];
-
-  const professionalOptions = veterinarians.map((vet) => ({
-    label: vet.name,
-    value: vet.id.toString(),
+  const clinicOptions = clinics.map((clinic) => ({
+    label: clinic.name,
+    value: clinic.id.toString(),
   }));
 
   useLayoutEffect(() => {
     navigation.setOptions({
       title: appointment == null ? "Novo Agendamento" : "Reagendar",
     });
-    if (appointment) {
-      setAppointmentType(appointment.appointmentType || "");
-      setScheduledStart(appointment.scheduledStart || "");
-      setNotes(appointment.notes || "");
-      setTAnimalId(appointment.tAnimalId?.toString() || "1");
-      setTUserProfileId(appointment.tUserProfileId?.toString() || "eu");
-      setTUserProfileId2(appointment.tUserProfileId2?.toString() || "1");
-    }
   }, []);
-
-  const handleDateTimePicker = (event: any, selectedDate: any) => {
-    if (event.type === "dismissed") {
-      setShowDateTimePicker(false);
-      return;
-    }
-
-    if (dateTimeMode === "date" && selectedDate) {
-      const currentDate = scheduledStart
-        ? new Date(scheduledStart)
-        : new Date();
-      selectedDate.setHours(currentDate.getHours(), currentDate.getMinutes());
-      setScheduledStart(selectedDate.toISOString());
-      setDateTimeMode("time");
-    } else if (dateTimeMode === "time" && selectedDate) {
-      const currentDate = new Date(scheduledStart || selectedDate);
-      selectedDate.setFullYear(
-        currentDate.getFullYear(),
-        currentDate.getMonth(),
-        currentDate.getDate(),
-      );
-      setScheduledStart(selectedDate.toISOString());
-      setShowDateTimePicker(false);
-      setDateTimeMode("date");
-    }
-  };
-
-  const openDateTimePicker = () => {
-    setDateTimeMode("date");
-    setShowDateTimePicker(true);
-  };
 
   function getAnimalLabel() {
     return (
-      animalOptions.find((opt) => opt.value === tAnimalId)?.label ||
-      "Selecione um animal"
+      animalOptions.find((opt) => opt.value === animalId)?.label ||
+      "Selecione um pet"
     );
   }
 
-  function getAppointmentTypeLabel() {
+  function getClinicLabel() {
     return (
-      appointmentTypeOptions.find((opt) => opt.value === appointmentType)
-        ?.label || "Selecione um tipo"
+      clinicOptions.find((opt) => opt.value === clinicId)?.label ||
+      "Selecione uma clínica"
     );
   }
 
-  function getResponsibleLabel() {
-    return (
-      responsibleOptions.find((opt) => opt.value === tUserProfileId)?.label ||
-      "Selecione"
-    );
+  function formatDate(value: Date) {
+    return value.toLocaleDateString("pt-BR");
   }
 
-  function getProfessionalLabel() {
-    return (
-      professionalOptions.find((opt) => opt.value === tUserProfileId2)?.label ||
-      "Selecione um profissional"
-    );
-  }
-
-  function formatDateTime(isoString: string) {
-    if (!isoString) return "Selecionar data e hora";
-    const date = new Date(isoString);
-    return date.toLocaleString("pt-BR");
+  function formatTime(value: Date) {
+    return value.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
   }
 
   function handleSave() {
-    if (!appointmentType || appointmentType === "0") {
-      Alert.alert("Atenção", "Tipo de atendimento é obrigatório");
+    if (!animalId) {
+      Alert.alert("Atenção", "Selecione um pet");
       return;
     }
 
-    if (!scheduledStart.trim()) {
-      Alert.alert("Atenção", "Data/hora de início é obrigatória");
+    if (!clinicId) {
+      Alert.alert("Atenção", "Selecione uma clínica");
       return;
     }
 
-    const appointmentTypeLabel = appointmentTypeOptions.find(
-      (opt) => opt.value === appointmentType,
-    )?.label;
-
-    const payload = {
-      ...(appointment || {}),
-      id: appointment?.id || Date.now(),
-      appointmentType: appointmentTypeLabel,
-      status: "Agendado",
-      scheduledStart,
-      price: 100,
-      notes: notes || undefined,
-      tAnimalId: parseInt(tAnimalId),
-      tUserProfileId: tUserProfileId === "eu" ? 1 : 2,
-      tUserProfileId2: parseInt(tUserProfileId2),
+    const input = {
+      date: date.toISOString().slice(0, 10),
+      time: date.toTimeString().slice(0, 5),
+      status: appointment?.status ?? "AGENDADO",
+      animalId: parseInt(animalId, 10),
+      clinicId: parseInt(clinicId, 10),
     };
 
-    try {
-      if (appointment) {
-        updateAppointment(payload);
-      } else {
-        createAppointment(payload);
-      }
-      navigation.goBack();
-    } catch (error) {
-      Alert.alert("Erro", "Não foi possível salvar o agendamento");
+    if (appointment) {
+      updateAppointment(appointment.id, input);
+    } else {
+      createAppointment(input);
     }
+
+    navigation.goBack();
   }
 
-  const createStyles = () =>
-    StyleSheet.create({
-      container: {
-        flex: 1,
-        padding: 20,
-        backgroundColor: theme.colors.backgroundSecondary,
+  function handleDelete() {
+    Alert.alert("Cancelar agendamento", "Deseja realmente cancelar este agendamento?", [
+      { text: "Voltar", style: "cancel" },
+      {
+        text: "Cancelar agendamento",
+        style: "destructive",
+        onPress: () => {
+          deleteAppointment(appointment!.id);
+          navigation.goBack();
+        },
       },
+    ]);
+  }
 
-      sectionTitle: {
-        fontSize: 12,
-        color: theme.colors.textSecondary,
-        fontWeight: "600",
-        marginTop: 16,
-        marginBottom: 8,
-      },
-
-      input: {
-        backgroundColor: theme.colors.background,
-        borderRadius: 8,
-        padding: 12,
-        marginBottom: 20,
-        color: theme.colors.text,
-      },
-
-      textArea: {
-        height: 120,
-        textAlignVertical: "top",
-        marginBottom: 24,
-      },
-
-      dropdownButton: {
-        backgroundColor: theme.colors.background,
-        borderRadius: 8,
-        padding: 12,
-        marginBottom: 20,
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-      },
-
-      dropdownText: {
-        fontSize: 14,
-        color: theme.colors.text,
-      },
-
-      dropdownArrow: {
-        fontSize: 12,
-        color: theme.colors.textSecondary,
-      },
-
-      dateButton: {
-        backgroundColor: theme.colors.background,
-        borderRadius: 8,
-        padding: 12,
-        marginBottom: 20,
-      },
-
-      dateButtonText: {
-        fontSize: 14,
-        color: theme.colors.text,
-      },
-
-      modalOverlay: {
-        flex: 1,
-        backgroundColor: "rgba(0, 0, 0, 0.5)",
-        justifyContent: "center",
-        alignItems: "center",
-      },
-
-      dropdownMenu: {
-        backgroundColor: theme.colors.background,
-        borderRadius: 12,
-        width: "80%",
-        maxHeight: "70%",
-        overflow: "hidden",
-      },
-
-      dropdownItem: {
-        paddingVertical: 12,
-        paddingHorizontal: 16,
-        borderBottomWidth: 1,
-        borderBottomColor: theme.colors.backgroundSecondary,
-      },
-
-      dropdownItemText: {
-        fontSize: 14,
-        color: theme.colors.text,
-      },
-
-      selectedItemText: {
-        fontWeight: "bold",
-        color: theme.colors.primary,
-      },
-
-      button: {
-        backgroundColor: theme.colors.primary,
-        padding: 16,
-        borderRadius: 8,
-        marginTop: 24,
-        marginBottom: 40,
-      },
-
-      buttonText: {
-        color: "white",
-        textAlign: "center",
-        fontWeight: "bold",
-        fontSize: 16,
-      },
-    });
-
-  const styles = createStyles();
+  const styles = createStyles(theme);
 
   return (
     <>
       <ScrollView style={styles.container}>
-        {/* Tipo de Atendimento */}
-        <Text style={styles.sectionTitle}>TIPO DE ATENDIMENTO</Text>
-        <TouchableOpacity
-          style={styles.dropdownButton}
-          onPress={() => setOpenDropdown("appointmentType")}
-        >
-          <Text style={styles.dropdownText}>{getAppointmentTypeLabel()}</Text>
-          <Text style={styles.dropdownArrow}>▼</Text>
-        </TouchableOpacity>
-
-        {/* Data e Hora de Início */}
-        <Text style={styles.sectionTitle}>DATA E HORA DE INÍCIO</Text>
-        <TouchableOpacity
-          style={styles.dateButton}
-          onPress={openDateTimePicker}
-        >
-          <Text style={styles.dateButtonText}>
-            {formatDateTime(scheduledStart)}
-          </Text>
-        </TouchableOpacity>
-
-        {/* Animal */}
-        <Text style={styles.sectionTitle}>ANIMAL</Text>
+        <Text style={styles.sectionTitle}>PET</Text>
         <TouchableOpacity
           style={styles.dropdownButton}
           onPress={() => setOpenDropdown("animal")}
@@ -333,82 +141,38 @@ export default function AppointmentFormScreen() {
           <Text style={styles.dropdownArrow}>▼</Text>
         </TouchableOpacity>
 
-        {/* Responsável */}
-        <Text style={styles.sectionTitle}>RESPONSÁVEL</Text>
+        <Text style={styles.sectionTitle}>CLÍNICA</Text>
         <TouchableOpacity
           style={styles.dropdownButton}
-          onPress={() => setOpenDropdown("responsible")}
+          onPress={() => setOpenDropdown("clinic")}
         >
-          <Text style={styles.dropdownText}>{getResponsibleLabel()}</Text>
+          <Text style={styles.dropdownText}>{getClinicLabel()}</Text>
           <Text style={styles.dropdownArrow}>▼</Text>
         </TouchableOpacity>
 
-        {/* Profissional */}
-        <Text style={styles.sectionTitle}>PROFISSIONAL</Text>
-        <TouchableOpacity
-          style={styles.dropdownButton}
-          onPress={() => setOpenDropdown("professional")}
-        >
-          <Text style={styles.dropdownText}>{getProfessionalLabel()}</Text>
-          <Text style={styles.dropdownArrow}>▼</Text>
+        <Text style={styles.sectionTitle}>DATA</Text>
+        <TouchableOpacity style={styles.dateButton} onPress={() => setShowDatePicker(true)}>
+          <Text style={styles.dateButtonText}>{formatDate(date)}</Text>
         </TouchableOpacity>
 
-        {/* Observações */}
-        <Text style={styles.sectionTitle}>OBSERVAÇÕES (OPCIONAL)</Text>
-        <TextInput
-          style={[styles.input, styles.textArea]}
-          value={notes}
-          onChangeText={setNotes}
-          multiline
-          textAlignVertical="top"
-          placeholder="Digite qualquer observação relevante"
-          placeholderTextColor={theme.colors.textPlaceholder}
-        />
+        <Text style={styles.sectionTitle}>HORÁRIO</Text>
+        <TouchableOpacity style={styles.dateButton} onPress={() => setShowTimePicker(true)}>
+          <Text style={styles.dateButtonText}>{formatTime(date)}</Text>
+        </TouchableOpacity>
 
         <TouchableOpacity style={styles.button} onPress={handleSave}>
           <Text style={styles.buttonText}>
             {appointment ? "Salvar alterações" : "Criar agendamento"}
           </Text>
         </TouchableOpacity>
+
+        {appointment && (
+          <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
+            <Text style={styles.buttonText}>Excluir agendamento</Text>
+          </TouchableOpacity>
+        )}
       </ScrollView>
 
-      {/* Appointment Type Dropdown Modal */}
-      <Modal
-        visible={openDropdown === "appointmentType"}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setOpenDropdown(null)}
-      >
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setOpenDropdown(null)}
-        >
-          <View style={styles.dropdownMenu}>
-            {appointmentTypeOptions.map((option) => (
-              <TouchableOpacity
-                key={option.value}
-                style={styles.dropdownItem}
-                onPress={() => {
-                  setAppointmentType(option.value);
-                  setOpenDropdown(null);
-                }}
-              >
-                <Text
-                  style={[
-                    styles.dropdownItemText,
-                    appointmentType === option.value && styles.selectedItemText,
-                  ]}
-                >
-                  {option.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </TouchableOpacity>
-      </Modal>
-
-      {/* Animal Dropdown Modal */}
       <Modal
         visible={openDropdown === "animal"}
         transparent
@@ -426,14 +190,14 @@ export default function AppointmentFormScreen() {
                 key={option.value}
                 style={styles.dropdownItem}
                 onPress={() => {
-                  setTAnimalId(option.value);
+                  setAnimalId(option.value);
                   setOpenDropdown(null);
                 }}
               >
                 <Text
                   style={[
                     styles.dropdownItemText,
-                    tAnimalId === option.value && styles.selectedItemText,
+                    animalId === option.value && styles.selectedItemText,
                   ]}
                 >
                   {option.label}
@@ -444,9 +208,8 @@ export default function AppointmentFormScreen() {
         </TouchableOpacity>
       </Modal>
 
-      {/* Responsible Profile Dropdown Modal */}
       <Modal
-        visible={openDropdown === "responsible"}
+        visible={openDropdown === "clinic"}
         transparent
         animationType="fade"
         onRequestClose={() => setOpenDropdown(null)}
@@ -457,19 +220,19 @@ export default function AppointmentFormScreen() {
           onPress={() => setOpenDropdown(null)}
         >
           <View style={styles.dropdownMenu}>
-            {responsibleOptions.map((option) => (
+            {clinicOptions.map((option) => (
               <TouchableOpacity
                 key={option.value}
                 style={styles.dropdownItem}
                 onPress={() => {
-                  setTUserProfileId(option.value);
+                  setClinicId(option.value);
                   setOpenDropdown(null);
                 }}
               >
                 <Text
                   style={[
                     styles.dropdownItemText,
-                    tUserProfileId === option.value && styles.selectedItemText,
+                    clinicId === option.value && styles.selectedItemText,
                   ]}
                 >
                   {option.label}
@@ -480,51 +243,142 @@ export default function AppointmentFormScreen() {
         </TouchableOpacity>
       </Modal>
 
-      {/* Professional Profile Dropdown Modal */}
-      <Modal
-        visible={openDropdown === "professional"}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setOpenDropdown(null)}
-      >
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setOpenDropdown(null)}
-        >
-          <View style={styles.dropdownMenu}>
-            {professionalOptions.map((option) => (
-              <TouchableOpacity
-                key={option.value}
-                style={styles.dropdownItem}
-                onPress={() => {
-                  setTUserProfileId2(option.value);
-                  setOpenDropdown(null);
-                }}
-              >
-                <Text
-                  style={[
-                    styles.dropdownItemText,
-                    tUserProfileId2 === option.value && styles.selectedItemText,
-                  ]}
-                >
-                  {option.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </TouchableOpacity>
-      </Modal>
-
-      {/* Date Time Picker */}
-      {showDateTimePicker && (
+      {showDatePicker && (
         <DateTimePicker
-          value={scheduledStart ? new Date(scheduledStart) : new Date()}
-          mode={dateTimeMode}
+          value={date}
+          mode="date"
           display="spinner"
-          onValueChange={handleDateTimePicker}
+          onChange={(event, selectedDate) => {
+            setShowDatePicker(false);
+            if (event.type !== "dismissed" && selectedDate) {
+              const updated = new Date(date);
+              updated.setFullYear(
+                selectedDate.getFullYear(),
+                selectedDate.getMonth(),
+                selectedDate.getDate(),
+              );
+              setDate(updated);
+            }
+          }}
+        />
+      )}
+
+      {showTimePicker && (
+        <DateTimePicker
+          value={date}
+          mode="time"
+          display="spinner"
+          onChange={(event, selectedDate) => {
+            setShowTimePicker(false);
+            if (event.type !== "dismissed" && selectedDate) {
+              const updated = new Date(date);
+              updated.setHours(selectedDate.getHours(), selectedDate.getMinutes());
+              setDate(updated);
+            }
+          }}
         />
       )}
     </>
   );
 }
+
+const createStyles = (theme: any) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      padding: 20,
+      backgroundColor: theme.colors.backgroundSecondary,
+    },
+
+    sectionTitle: {
+      fontSize: 12,
+      color: theme.colors.textSecondary,
+      fontWeight: "600",
+      marginTop: 16,
+      marginBottom: 8,
+    },
+
+    dropdownButton: {
+      backgroundColor: theme.colors.background,
+      borderRadius: 8,
+      padding: 12,
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+    },
+
+    dropdownText: {
+      fontSize: 14,
+      color: theme.colors.text,
+    },
+
+    dropdownArrow: {
+      fontSize: 12,
+      color: theme.colors.textSecondary,
+    },
+
+    dateButton: {
+      backgroundColor: theme.colors.background,
+      borderRadius: 8,
+      padding: 12,
+    },
+
+    dateButtonText: {
+      fontSize: 14,
+      color: theme.colors.text,
+    },
+
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: "rgba(0, 0, 0, 0.5)",
+      justifyContent: "center",
+      alignItems: "center",
+    },
+
+    dropdownMenu: {
+      backgroundColor: theme.colors.background,
+      borderRadius: 12,
+      width: "80%",
+      maxHeight: "70%",
+      overflow: "hidden",
+    },
+
+    dropdownItem: {
+      paddingVertical: 12,
+      paddingHorizontal: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.colors.backgroundSecondary,
+    },
+
+    dropdownItemText: {
+      fontSize: 14,
+      color: theme.colors.text,
+    },
+
+    selectedItemText: {
+      fontWeight: "bold",
+      color: theme.colors.primary,
+    },
+
+    button: {
+      backgroundColor: theme.colors.primary,
+      padding: 16,
+      borderRadius: 8,
+      marginTop: 24,
+      marginBottom: 40,
+    },
+
+    deleteButton: {
+      backgroundColor: theme.colors.remove,
+      padding: 16,
+      borderRadius: 8,
+      marginBottom: 40,
+    },
+
+    buttonText: {
+      color: "white",
+      textAlign: "center",
+      fontWeight: "bold",
+      fontSize: 16,
+    },
+  });

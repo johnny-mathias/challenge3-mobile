@@ -10,11 +10,11 @@ import {
   useRoute,
 } from '@react-navigation/native';
 
-import { useAnimals, useVeterinarians } from '../hooks/queries';
-
 import { useAppointments } from '../context/AppointmentsProvider';
 import { useTheme } from '../theme/ThemeProvider';
 import { themes } from '../theme/theme';
+
+import type { AppointmentDTO } from '../types/api.types';
 
 export default function AppointmentDetailsScreen() {
     const theme = useTheme();
@@ -26,25 +26,13 @@ export default function AppointmentDetailsScreen() {
   const { deleteAppointment } =
     useAppointments();
 
-  const { data: animals = [] } = useAnimals();
-  const { data: veterinarians = [] } = useVeterinarians();
-
-  const { appointment } = route.params;
-
-  const animal = animals.find(
-    (item) => item.id === appointment.tAnimalId
-  );
-
-  const veterinarian = veterinarians.find(
-    (item) =>
-      item.id === appointment.tUserProfileId2
-  );
+  const { appointment } = route.params as { appointment: AppointmentDTO };
 
   return (
       <View style={styles.container}>
         <View style={styles.card}>
           <Text style={styles.title}>
-            {appointment.appointmentType}
+            {appointment.date} às {appointment.time}
           </Text>
 
           <Text style={styles.label}>
@@ -52,7 +40,15 @@ export default function AppointmentDetailsScreen() {
           </Text>
 
           <Text style={styles.text}>
-            {animal?.name}
+            {appointment.animalName}
+          </Text>
+
+          <Text style={styles.label}>
+            Clínica
+          </Text>
+
+          <Text style={styles.text}>
+            {appointment.clinicName}
           </Text>
 
           <Text style={styles.label}>
@@ -60,15 +56,15 @@ export default function AppointmentDetailsScreen() {
           </Text>
 
           <Text style={styles.text}>
-            {veterinarian?.name}
+            {appointment.veterinarianName ?? 'A definir pela clínica'}
           </Text>
 
           <Text style={styles.label}>
-            Observações
+            Status
           </Text>
 
           <Text style={styles.text}>
-            {appointment.notes && appointment.notes !== "" ? appointment.notes : 'Sem observações'}
+            {appointment.status}
           </Text>
         </View>
 

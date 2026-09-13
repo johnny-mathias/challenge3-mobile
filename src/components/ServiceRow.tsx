@@ -4,21 +4,15 @@ import { Swipeable } from "react-native-gesture-handler";
 
 import { useNavigation } from "@react-navigation/native";
 
-import { useAnimals } from "../hooks/queries";
-
 import { useTheme } from "../theme/ThemeProvider";
 import { themes } from "../theme/theme";
 
-export default function ServiceRow({ appointment }: any) {
+import type { AppointmentDTO } from "../types/api.types";
+
+export default function ServiceRow({ appointment }: { appointment: AppointmentDTO }) {
   const theme = useTheme();
   const styles = createStyles(theme);
   const navigation = useNavigation<any>();
-
-  const { data: animals = [] } = useAnimals();
-
-  const animal = animals.find((item) => item.id === appointment.tAnimalId);
-
-  const date = new Date(appointment.scheduledStart);
 
   function handleEdit() {
     navigation.navigate("AppointmentFormScreen", {
@@ -38,20 +32,15 @@ export default function ServiceRow({ appointment }: any) {
         }
       >
         <View>
-          <Text style={styles.title}>{appointment.appointmentType}</Text>
+          <Text style={styles.title}>{appointment.animalName}</Text>
 
-          <Text style={styles.subtitle}>{animal?.name}</Text>
+          <Text style={styles.subtitle}>{appointment.clinicName}</Text>
         </View>
 
         <View style={styles.rightArea}>
-          <Text style={styles.date}>{date.toLocaleDateString("pt-BR")}</Text>
+          <Text style={styles.date}>{appointment.date}</Text>
 
-          <Text style={styles.time}>
-            {date.toLocaleTimeString("pt-BR", {
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
-          </Text>
+          <Text style={styles.time}>{appointment.time}</Text>
 
           <TouchableOpacity style={styles.button} onPress={handleEdit}>
             <Text style={styles.buttonText}>Reagendar</Text>

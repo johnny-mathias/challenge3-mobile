@@ -2,7 +2,7 @@ import AppointmentDetailsScreen from "./src/screens/AppointmentDetailsScreen";
 import AppointmentFormScreen from "./src/screens/AppointmentFormScreen";
 
 import "react-native-gesture-handler";
-import { StyleSheet, Text, View, Image, TouchableOpacity } from "react-native";
+import { ActivityIndicator, StyleSheet, Text, View, Image, TouchableOpacity } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 import { NavigationContainer } from "@react-navigation/native";
@@ -20,17 +20,49 @@ import { themes } from "./src/theme/theme";
 import logo from "./assets/sb-logo-png.png";
 
 import ArticleDetailsScreen from "./src/screens/ArticleDetailsScreen";
+import AnimalFormScreen from "./src/screens/AnimalFormScreen";
+import LoginScreen from "./src/screens/LoginScreen";
+import RegisterScreen from "./src/screens/RegisterScreen";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AppointmentsProvider } from "./src/context/AppointmentsProvider";
+import { AuthProvider, useAuth } from "./src/context/AuthProvider";
 
 const Stack = createNativeStackNavigator();
+const AuthStack = createNativeStackNavigator();
 
 const queryClient = new QueryClient();
+
+function AuthNavigator() {
+  return (
+    <AuthStack.Navigator screenOptions={{ headerShown: false }}>
+      <AuthStack.Screen name="Login" component={LoginScreen} />
+      <AuthStack.Screen name="Cadastro" component={RegisterScreen} />
+    </AuthStack.Navigator>
+  );
+}
 
 function AppContent() {
   const theme = useTheme();
 
   const styles = createStyles(theme);
+
+  const { user, guardian, isLoading, sessionExpired } = useAuth();
+
+  if (isLoading) {
+    return (
+      <View style={[styles.loadingContainer, { backgroundColor: theme.colors.background }]}>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
+      </View>
+    );
+  }
+
+  if (!user || !guardian || sessionExpired) {
+    return (
+      <NavigationContainer>
+        <AuthNavigator />
+      </NavigationContainer>
+    );
+  }
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -126,6 +158,23 @@ function AppContent() {
                   },
                 })}
               />
+
+              <Stack.Screen
+                name="AnimalFormScreen"
+                component={AnimalFormScreen}
+                options={() => ({
+                  headerBackButtonDisplayMode: "minimal",
+                  headerTintColor: theme.colors.text,
+                  headerTitleStyle: {
+                    color: theme.colors.text,
+                  },
+                  headerShown: true,
+                  headerStyle: {
+                    backgroundColor: theme.colors.backgroundSecondary,
+                    borderBottomColor: theme.colors.border,
+                  },
+                })}
+              />
             </Stack.Navigator>
           </SafeAreaProvider>
         </NavigationContainer>
@@ -138,7 +187,9 @@ export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ThemeProvider>
-        <AppContent />
+        <AuthProvider>
+          <AppContent />
+        </AuthProvider>
       </ThemeProvider>
     </GestureHandlerRootView>
   );
@@ -146,6 +197,12 @@ export default function App() {
 
 const createStyles = (theme: (typeof themes)["light"]) =>
   StyleSheet.create({
+    loadingContainer: {
+      flex: 1,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+
     navButton: {
       color: theme.colors.primary,
       fontSize: 16,

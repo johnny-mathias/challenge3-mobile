@@ -4,7 +4,7 @@ import AccountScreen from "../screens/AccountScreen";
 import ServicesScreen from "../screens/ServicesScreen";
 
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import HistoryScreen from "../screens/HistoryScreen";
+import PetsScreen from "../screens/PetsScreen";
 
 import { useTheme } from "../theme/ThemeProvider";
 
@@ -32,8 +32,8 @@ export default function MainTabs() {
             case "ServicesScreen":
               iconName = "menu";
               break;
-            case "HistoryScreen":
-              iconName = "history";
+            case "PetsScreen":
+              iconName = "pets";
               break;
             case "AccountScreen":
               iconName = "account-circle";
@@ -77,10 +77,10 @@ export default function MainTabs() {
         }}
       />
       <Tab.Screen
-        name="HistoryScreen"
-        component={HistoryScreen}
+        name="PetsScreen"
+        component={PetsScreen}
         options={{
-          title: "Histórico",
+          title: "Pets",
           headerTitleStyle: {
             color: colors.text,
           },

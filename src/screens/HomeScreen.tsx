@@ -12,7 +12,7 @@ import { useNavigation } from "@react-navigation/native";
 
 import Article from "../components/Article";
 
-import { useArticles } from "../hooks/queries";
+import articles from "../data/articles.json";
 
 import { themes } from "../theme/theme";
 import { useTheme } from "../theme/ThemeProvider";
@@ -24,7 +24,6 @@ const { width } = Dimensions.get("window");
 export default function HomeScreen() {
   const navigation = useNavigation();
   const { appointments } = useAppointments();
-  const { data: articles = [] } = useArticles();
   const theme = useTheme();
   const styles = createStyles(theme);
 

@@ -22,6 +22,7 @@
     "expo-image": "~56.0.9",
     "expo-linear-gradient": "~56.0.4",
     "expo-status-bar": "~56.0.4",
+    "firebase": "^12.19.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-native": "0.85.3",

@@ -1,27 +1,20 @@
 import { useQuery } from '@tanstack/react-query';
 
-import { getAnimals } from '../api/animals.api';
-import { getVeterinarians } from '../api/veterinarians.api';
-import { getAppointmentTypes } from '../api/appointmentTypes.api';
-import { getArticles } from '../api/articles.api';
-import { getSettings } from '../api/settings.api';
+import { useAuth } from '../context/AuthProvider';
 
-export function useAnimals() {
-  return useQuery({ queryKey: ['animals'], queryFn: getAnimals });
+import { getAnimalsByGuardian } from '../api/animals.api';
+import { getApprovedClinics } from '../api/clinics.api';
+
+export function useMyAnimals() {
+  const { guardian } = useAuth();
+
+  return useQuery({
+    queryKey: ['animals', guardian?.id],
+    queryFn: () => getAnimalsByGuardian(guardian!.id),
+    enabled: !!guardian,
+  });
 }
 
-export function useVeterinarians() {
-  return useQuery({ queryKey: ['veterinarians'], queryFn: getVeterinarians });
-}
-
-export function useAppointmentTypes() {
-  return useQuery({ queryKey: ['appointmentTypes'], queryFn: getAppointmentTypes });
-}
-
-export function useArticles() {
-  return useQuery({ queryKey: ['articles'], queryFn: getArticles });
-}
-
-export function useSettings() {
-  return useQuery({ queryKey: ['settings'], queryFn: getSettings });
+export function useApprovedClinics() {
+  return useQuery({ queryKey: ['clinics'], queryFn: getApprovedClinics });
 }

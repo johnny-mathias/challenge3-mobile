@@ -6,25 +6,27 @@ import {
   useQueryClient,
 } from '@tanstack/react-query';
 
-import type { Appointment } from '../types/appointment.types';
+import { useAuth } from './AuthProvider';
 
 import {
   createAppointment as createAppointmentRequest,
   deleteAppointment as deleteAppointmentRequest,
-  getAppointments,
+  getAppointmentsByGuardian,
   updateAppointment as updateAppointmentRequest,
 } from '../api/appointments.api';
+
+import type { AppointmentDTO, AppointmentInput } from '../types/api.types';
 
 const APPOINTMENTS_KEY = ['appointments'];
 
 interface AppointmentsContextData {
-  appointments: Appointment[];
+  appointments: AppointmentDTO[];
   isLoading: boolean;
   isError: boolean;
 
-  createAppointment: (data: Appointment) => void;
+  createAppointment: (data: AppointmentInput) => void;
 
-  updateAppointment: (data: Appointment) => void;
+  updateAppointment: (id: number, data: AppointmentInput) => void;
 
   deleteAppointment: (id: number) => void;
 }
@@ -36,14 +38,16 @@ const AppointmentsContext =
 
 export function AppointmentsProvider({ children }: any) {
   const queryClient = useQueryClient();
+  const { guardian } = useAuth();
 
   const {
     data: appointments = [],
     isLoading,
     isError,
   } = useQuery({
-    queryKey: APPOINTMENTS_KEY,
-    queryFn: getAppointments,
+    queryKey: [...APPOINTMENTS_KEY, guardian?.name],
+    queryFn: () => getAppointmentsByGuardian(guardian!.name),
+    enabled: !!guardian,
   });
 
   function invalidate() {
@@ -56,7 +60,8 @@ export function AppointmentsProvider({ children }: any) {
   });
 
   const updateMutation = useMutation({
-    mutationFn: updateAppointmentRequest,
+    mutationFn: ({ id, data }: { id: number; data: AppointmentInput }) =>
+      updateAppointmentRequest(id, data),
     onSuccess: invalidate,
   });
 
@@ -72,7 +77,7 @@ export function AppointmentsProvider({ children }: any) {
         isLoading,
         isError,
         createAppointment: (data) => createMutation.mutate(data),
-        updateAppointment: (data) => updateMutation.mutate(data),
+        updateAppointment: (id, data) => updateMutation.mutate({ id, data }),
         deleteAppointment: (id) => deleteMutation.mutate(id),
       }}
     >
