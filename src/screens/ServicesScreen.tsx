@@ -45,6 +45,11 @@ export default function ServicesScreen() {
         }}
         data={appointments}
         keyExtractor={(item) => item.id.toString()}
+        ListEmptyComponent={
+          <Text style={styles.emptyText}>
+            Quando você possuir algum agendamento, ele deverá aparecer aqui
+          </Text>
+        }
         renderItem={({ item }) => <ServiceRow appointment={item} />}
       />
 
@@ -77,11 +82,17 @@ const createStyles = (theme: (typeof themes)["light"]) =>
       fontSize: 15,
     },
 
+    emptyText: {
+      color: theme.colors.textSecondary,
+      textAlign: "center",
+      marginTop: 40,
+    },
+
     fab: {
       position: "absolute",
       right: 15,
       bottom: 25,
-      width: 100,
+      width: 130,
       height: 64,
       borderRadius: 32,
       backgroundColor: theme.colors.tertiary,

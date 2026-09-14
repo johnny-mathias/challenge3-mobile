@@ -12,7 +12,7 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 
 import { useNavigation, useRoute } from "@react-navigation/native";
 
-import { useLayoutEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
 
 import { useAppointments } from "../context/AppointmentsProvider";
 import { useTheme } from "../theme/ThemeProvider";
@@ -30,8 +30,21 @@ export default function AppointmentFormScreen() {
 
   const { createAppointment, updateAppointment, deleteAppointment } = useAppointments();
 
-  const { data: animals = [] } = useMyAnimals();
+  const { data: animals = [], isLoading: isLoadingAnimals } = useMyAnimals();
   const { data: clinics = [] } = useApprovedClinics();
+
+  useEffect(() => {
+    if (!isLoadingAnimals && animals.length === 0) {
+      Alert.alert(
+        "Nenhum pet cadastrado",
+        "Você precisa cadastrar um pet antes de criar um agendamento.",
+        [
+          { text: "Cancelar", style: "cancel", onPress: () => navigation.goBack() },
+          { text: "Cadastrar Pet", onPress: () => navigation.navigate("AnimalFormScreen") },
+        ],
+      );
+    }
+  }, [isLoadingAnimals, animals.length]);
 
   const [animalId, setAnimalId] = useState(
     appointment?.animalId?.toString() ?? "",

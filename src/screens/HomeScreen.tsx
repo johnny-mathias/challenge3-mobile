@@ -71,6 +71,11 @@ export default function HomeScreen() {
             }}
             data={appointments}
             keyExtractor={(item) => item.id.toString()}
+            ListEmptyComponent={
+              <Text style={styles.emptyText}>
+                Quando você possuir algum agendamento, ele deverá aparecer aqui
+              </Text>
+            }
             renderItem={({ item }) => <ServiceRow appointment={item} />}
           />
         )}
@@ -97,6 +102,11 @@ const createStyles = (theme: (typeof themes)["light"]) =>
       color: theme.colors.textSecondary,
       fontSize: 15,
       textAlign: "center",
+    },
+    emptyText: {
+      color: theme.colors.textSecondary,
+      textAlign: "center",
+      marginTop: 12,
     },
     container: {
       flex: 1,

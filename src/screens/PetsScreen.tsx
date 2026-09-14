@@ -93,7 +93,7 @@ export default function PetsScreen() {
         style={styles.fab}
         onPress={() => navigation.navigate('AnimalFormScreen')}
       >
-        <Text style={styles.fabText}>Novo Pet</Text>
+        <Text style={styles.fabText}>Cadastrar</Text>
       </TouchableOpacity>
     </View>
   );
@@ -175,9 +175,9 @@ const createStyles = (theme: (typeof themes)['light']) =>
       position: 'absolute',
       right: 15,
       bottom: 25,
-      paddingHorizontal: 20,
-      height: 56,
-      borderRadius: 28,
+      width: 130,
+      height: 64,
+      borderRadius: 32,
       backgroundColor: theme.colors.tertiary,
       alignItems: 'center',
       justifyContent: 'center',
@@ -185,7 +185,7 @@ const createStyles = (theme: (typeof themes)['light']) =>
 
     fabText: {
       color: theme.colors.add,
-      fontSize: 16,
+      fontSize: 20,
       fontWeight: 'bold',
     },
   });
