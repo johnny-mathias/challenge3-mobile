@@ -20,6 +20,19 @@ import { getMyGuardian } from '../api/guardians.api';
 
 import type { GuardianDTO } from '../types/api.types';
 
+function delay(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function getMyGuardianWithRetry(email: string): Promise<GuardianDTO> {
+  try {
+    return await getMyGuardian(email);
+  } catch {
+    await delay(1000);
+    return getMyGuardian(email);
+  }
+}
+
 interface AuthContextData {
   user: User | null;
   guardian: GuardianDTO | null;
@@ -66,14 +79,14 @@ export function AuthProvider({ children }: PropsWithChildren) {
   async function login(email: string, password: string) {
     await signInWithEmailAndPassword(auth, email, password);
     await ensureGuardianSession(email.split('@')[0], email, password);
-    setGuardian(await getMyGuardian(email));
+    setGuardian(await getMyGuardianWithRetry(email));
     setSessionExpired(false);
   }
 
   async function register(name: string, email: string, password: string) {
     await createUserWithEmailAndPassword(auth, email, password);
     await ensureGuardianSession(name, email, password);
-    setGuardian(await getMyGuardian(email));
+    setGuardian(await getMyGuardianWithRetry(email));
     setSessionExpired(false);
   }
 
