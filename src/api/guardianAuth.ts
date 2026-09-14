@@ -21,7 +21,6 @@ export async function registerGuardian(name: string, email: string, password: st
   );
 
   const finalUrl = finalUrlOf(response);
-  console.log('[guardianAuth] registerGuardian finalURL', finalUrl);
 
   if (!finalUrl || !finalUrl.includes('/login')) {
     throw new Error('Não foi possível concluir o cadastro (e-mail já cadastrado ou dados inválidos)');
@@ -48,7 +47,14 @@ export async function ensureGuardianSession(name: string, email: string, passwor
   try {
     await loginGuardian(email, password);
   } catch {
-    await registerGuardian(name, email, password);
+    try {
+      await registerGuardian(name, email, password);
+    } catch {
+      // O cadastro pode falhar porque esse e-mail já existe na API (ex: senha
+      // errada numa conta já criada) — nesse caso deixamos o login abaixo
+      // decidir e reportar o erro real, em vez do erro cru do cadastro.
+    }
+
     await loginGuardian(email, password);
   }
 }
