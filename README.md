@@ -95,7 +95,7 @@ src/
 
 ## Vídeo de apresentação
 
-**Sprint 3:** [Adicionar link do vídeo aqui]
+**Sprint 3:** https://www.youtube.com/watch?v=FxlKVMKECHE
 
 ## Equipe
 
