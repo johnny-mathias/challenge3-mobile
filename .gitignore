@@ -42,3 +42,6 @@ yarn-error.*
 
 # credenciais do Oracle do backend Node
 backend/.env
+
+# saídas do Playwright MCP (snapshots podem conter dados sensíveis)
+.playwright-mcp/
