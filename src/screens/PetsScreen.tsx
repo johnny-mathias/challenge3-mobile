@@ -91,7 +91,7 @@ export default function PetsScreen() {
 
       <TouchableOpacity
         style={styles.fab}
-        onPress={() => navigation.navigate('AnimalFormScreen')}
+        onPress={() => navigation.navigate('AnimalCreateScreen')}
       >
         <Text style={styles.fabText}>Cadastrar</Text>
       </TouchableOpacity>

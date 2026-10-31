@@ -21,6 +21,7 @@ import logo from "./assets/sb-logo-png.png";
 
 import ArticleDetailsScreen from "./src/screens/ArticleDetailsScreen";
 import AnimalFormScreen from "./src/screens/AnimalFormScreen";
+import AnimalCreateScreen from "./src/screens/AnimalCreateScreen";
 import LoginScreen from "./src/screens/LoginScreen";
 import RegisterScreen from "./src/screens/RegisterScreen";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -165,6 +166,24 @@ function AppContent() {
                 options={() => ({
                   headerBackButtonDisplayMode: "minimal",
                   headerTintColor: theme.colors.text,
+                  headerTitleStyle: {
+                    color: theme.colors.text,
+                  },
+                  headerShown: true,
+                  headerStyle: {
+                    backgroundColor: theme.colors.backgroundSecondary,
+                    borderBottomColor: theme.colors.border,
+                  },
+                })}
+              />
+
+              <Stack.Screen
+                name="AnimalCreateScreen"
+                component={AnimalCreateScreen}
+                options={() => ({
+                  headerBackButtonDisplayMode: "minimal",
+                  headerTintColor: theme.colors.text,
+                  title: "Novo Pet",
                   headerTitleStyle: {
                     color: theme.colors.text,
                   },

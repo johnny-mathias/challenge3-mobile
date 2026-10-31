@@ -29,6 +29,34 @@ export interface AnimalInput {
   guardianId: number;
 }
 
+// Backend Node/Oracle (backend/) — nomes de campos em português, como na API
+export interface OracleSpecies {
+  id: number;
+  nome: string;
+  nomeCientifico: string | null;
+}
+
+export interface OracleBreed {
+  id: number;
+  nome: string;
+  porte: string;
+}
+
+export interface OracleAnimalInput {
+  nome: string;
+  apelido?: string;
+  genero: 'M' | 'F';
+  dataNascimento?: string; // YYYY-MM-DD
+  rga?: string;
+  microchip?: string;
+  castrado: boolean;
+  peso?: number;
+  altura?: number;
+  cor?: string;
+  especieId: number;
+  racaId: number;
+}
+
 export type ClinicStatus = 'PENDING' | 'APPROVED' | 'DENIED' | 'REMOVED';
 
 export interface ClinicDTO {
