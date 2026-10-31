@@ -10,30 +10,63 @@ import {
 
 import { useNavigation } from '@react-navigation/native';
 
-import { useMyAnimals } from '../hooks/queries';
+import { useMyAnimals, useMyOracleAnimals } from '../hooks/queries';
 import { useAnimalMutations } from '../hooks/useAnimalMutations';
+import { useOracleAnimalMutations } from '../hooks/useOracleAnimalMutations';
 import { useTheme } from '../theme/ThemeProvider';
 import { themes } from '../theme/theme';
 
-import type { AnimalDTO } from '../types/api.types';
+import type { AnimalDTO, OracleAnimal } from '../types/api.types';
+
+// Pets vêm de duas fontes: API Java (sprints anteriores) e backend Node/Oracle
+type PetItem =
+  | { source: 'api'; animal: AnimalDTO }
+  | { source: 'oracle'; animal: OracleAnimal };
+
+function describeOracleAnimal(animal: OracleAnimal) {
+  const parts = [animal.especie, animal.raca && `${animal.raca} (${animal.porte})`];
+  if (animal.peso != null) parts.push(`${animal.peso}kg`);
+  return parts.filter(Boolean).join(' · ');
+}
 
 export default function PetsScreen() {
   const theme = useTheme();
   const styles = createStyles(theme);
   const navigation = useNavigation<any>();
 
-  const { data: animals = [], isLoading, isError } = useMyAnimals();
+  const apiAnimals = useMyAnimals();
+  const oracleAnimals = useMyOracleAnimals();
   const { deleteAnimal } = useAnimalMutations();
+  const { deleteOracleAnimal } = useOracleAnimalMutations();
 
-  function handleDelete(animal: AnimalDTO) {
-    Alert.alert('Remover pet', `Remover ${animal.name}?`, [
+  const isLoading = apiAnimals.isLoading || oracleAnimals.isLoading;
+  const isError = apiAnimals.isError && oracleAnimals.isError;
+
+  const pets: PetItem[] = [
+    ...(oracleAnimals.data ?? []).map((animal) => ({ source: 'oracle' as const, animal })),
+    ...(apiAnimals.data ?? []).map((animal) => ({ source: 'api' as const, animal })),
+  ];
+
+  function confirmDelete(name: string, onConfirm: () => Promise<unknown>) {
+    Alert.alert('Remover pet', `Remover ${name}?`, [
       { text: 'Cancelar', style: 'cancel' },
       {
         text: 'Remover',
         style: 'destructive',
-        onPress: () => deleteAnimal(animal.id),
+        onPress: () =>
+          onConfirm().catch((error: any) =>
+            Alert.alert('Erro', error?.message ?? 'Não foi possível remover o pet'),
+          ),
       },
     ]);
+  }
+
+  function handleDelete(item: PetItem) {
+    if (item.source === 'oracle') {
+      confirmDelete(item.animal.nome, () => deleteOracleAnimal(item.animal.id));
+    } else {
+      confirmDelete(item.animal.name, () => deleteAnimal(item.animal.id));
+    }
   }
 
   if (isLoading) {
@@ -56,27 +89,46 @@ export default function PetsScreen() {
     <View style={styles.container}>
       <FlatList
         contentContainerStyle={styles.listContent}
-        data={animals}
-        keyExtractor={(item) => item.id.toString()}
+        data={pets}
+        keyExtractor={(item) => `${item.source}-${item.animal.id}`}
+        ListHeaderComponent={
+          apiAnimals.isError || oracleAnimals.isError ? (
+            <Text style={styles.warningText}>
+              Alguns pets não puderam ser carregados. Tente novamente em instantes.
+            </Text>
+          ) : null
+        }
         ListEmptyComponent={
           <Text style={styles.emptyText}>Você ainda não cadastrou nenhum pet</Text>
         }
         renderItem={({ item }) => (
           <View style={styles.card}>
-            <View>
-              <Text style={styles.name}>{item.name}</Text>
-              <Text style={styles.details}>
-                {item.species} · {item.age} anos · {item.weight}kg
-              </Text>
-            </View>
+            {item.source === 'oracle' ? (
+              <View>
+                <Text style={styles.name}>
+                  {item.animal.nome}
+                  {item.animal.apelido ? ` "${item.animal.apelido}"` : ''}
+                </Text>
+                <Text style={styles.details}>{describeOracleAnimal(item.animal)}</Text>
+              </View>
+            ) : (
+              <View>
+                <Text style={styles.name}>{item.animal.name}</Text>
+                <Text style={styles.details}>
+                  {item.animal.species} · {item.animal.age} anos · {item.animal.weight}kg
+                </Text>
+              </View>
+            )}
 
             <View style={styles.actions}>
-              <TouchableOpacity
-                style={styles.editButton}
-                onPress={() => navigation.navigate('AnimalFormScreen', { animal: item })}
-              >
-                <Text style={styles.actionText}>Editar</Text>
-              </TouchableOpacity>
+              {item.source === 'api' && (
+                <TouchableOpacity
+                  style={styles.editButton}
+                  onPress={() => navigation.navigate('AnimalFormScreen', { animal: item.animal })}
+                >
+                  <Text style={styles.actionText}>Editar</Text>
+                </TouchableOpacity>
+              )}
 
               <TouchableOpacity
                 style={styles.deleteButton}
@@ -120,6 +172,12 @@ const createStyles = (theme: (typeof themes)['light']) =>
 
     listContent: {
       padding: 20,
+    },
+
+    warningText: {
+      color: theme.colors.remove,
+      textAlign: 'center',
+      marginBottom: 14,
     },
 
     emptyText: {

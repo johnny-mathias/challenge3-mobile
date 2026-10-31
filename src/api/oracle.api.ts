@@ -3,6 +3,7 @@ import axios from 'axios';
 import { ORACLE_API_URL } from '../config/env';
 
 import type {
+  OracleAnimal,
   OracleAnimalInput,
   OracleBreed,
   OracleSpecies,
@@ -47,6 +48,25 @@ export async function createOracleAnimal(input: OracleAnimalInput): Promise<numb
   try {
     const { data } = await oracleClient.post<{ id: number }>('/animals', input);
     return data.id;
+  } catch (error) {
+    throw toError(error);
+  }
+}
+
+export async function getOracleAnimalsByTutor(tutorEmail: string): Promise<OracleAnimal[]> {
+  try {
+    const { data } = await oracleClient.get<{ animais: OracleAnimal[] }>('/animals', {
+      params: { tutorEmail },
+    });
+    return data.animais;
+  } catch (error) {
+    throw toError(error);
+  }
+}
+
+export async function deleteOracleAnimal(id: number, tutorEmail: string): Promise<void> {
+  try {
+    await oracleClient.delete(`/animals/${id}`, { params: { tutorEmail } });
   } catch (error) {
     throw toError(error);
   }

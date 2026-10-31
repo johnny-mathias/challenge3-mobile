@@ -15,10 +15,9 @@ import {
 import DateTimePicker from '@react-native-community/datetimepicker';
 
 import { useNavigation } from '@react-navigation/native';
-import { useMutation } from '@tanstack/react-query';
 
-import { createOracleAnimal } from '../api/oracle.api';
 import { useBreeds, useSpecies } from '../hooks/queries';
+import { useOracleAnimalMutations } from '../hooks/useOracleAnimalMutations';
 import { useTheme } from '../theme/ThemeProvider';
 import { themes } from '../theme/theme';
 
@@ -69,7 +68,7 @@ export default function AnimalCreateScreen() {
   const species = useSpecies();
   const breeds = useBreeds(especieId);
 
-  const createMutation = useMutation({ mutationFn: createOracleAnimal });
+  const { createOracleAnimal, isCreating } = useOracleAnimalMutations();
 
   const selectedSpecies = species.data?.find((s) => s.id === especieId);
   const selectedBreed = breeds.data?.find((b) => b.id === racaId);
@@ -112,7 +111,7 @@ export default function AnimalCreateScreen() {
       return;
     }
 
-    const input: OracleAnimalInput = {
+    const input: Omit<OracleAnimalInput, 'tutorEmail' | 'tutorNome'> = {
       nome: nome.trim(),
       apelido: apelido.trim() || undefined,
       genero,
@@ -133,7 +132,7 @@ export default function AnimalCreateScreen() {
     }
 
     try {
-      const id = await createMutation.mutateAsync(input);
+      const id = await createOracleAnimal(input);
       Alert.alert('Pet cadastrado', `${input.nome} foi salvo no Oracle (ID ${id}).`);
       navigation.goBack();
     } catch (err: any) {
@@ -275,12 +274,12 @@ export default function AnimalCreateScreen() {
         {error && <Text style={styles.errorText}>{error}</Text>}
 
         <TouchableOpacity
-          style={[styles.button, createMutation.isPending && styles.disabled]}
+          style={[styles.button, isCreating && styles.disabled]}
           onPress={handleSave}
-          disabled={createMutation.isPending}
+          disabled={isCreating}
         >
           <Text style={styles.buttonText}>
-            {createMutation.isPending ? 'Salvando...' : 'Cadastrar pet'}
+            {isCreating ? 'Salvando...' : 'Cadastrar pet'}
           </Text>
         </TouchableOpacity>
       </ScrollView>

@@ -55,6 +55,27 @@ export interface OracleAnimalInput {
   cor?: string;
   especieId: number;
   racaId: number;
+  tutorEmail: string;
+  tutorNome?: string;
+}
+
+// Formato gerado por PKG_ANIMAL.FN_ANIMAL_TO_JSON
+export interface OracleAnimal {
+  id: number;
+  nome: string;
+  apelido: string | null;
+  genero: 'M' | 'F' | null;
+  dataNascimento: string | null;
+  rga: string | null;
+  microchip: string | null;
+  castrado: boolean | null;
+  peso: number | null;
+  altura: number | null;
+  cor: string | null;
+  status: string | null;
+  especie: string | null;
+  raca: string | null;
+  porte: string | null;
 }
 
 export type ClinicStatus = 'PENDING' | 'APPROVED' | 'DENIED' | 'REMOVED';
