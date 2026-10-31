@@ -1,5 +1,6 @@
 const express = require("express");
 const { conectarOracle } = require("./database");
+const { buscarPerfilTutor, obterOuCriarPerfilTutor } = require("./tutores");
 
 const router = express.Router();
 
@@ -57,9 +58,27 @@ router.get("/", async (req, res) => {
     }
 
     // Converte as linhas JSON em objetos JavaScript
-    const animais = linhas
+    let animais = linhas
       .filter((linha) => linha.trim().startsWith("{"))
       .map((linha) => JSON.parse(linha));
+
+    // ?tutorEmail=... restringe aos animais sob responsabilidade ativa do tutor
+    const { tutorEmail } = req.query;
+
+    if (tutorEmail) {
+      const perfilId = await buscarPerfilTutor(connection, tutorEmail);
+
+      const vinculos = perfilId
+        ? await connection.execute(
+            `SELECT T_ANIMAL_ID FROM T_ANIMAL_RESP
+              WHERE T_USER_PROFILE_ID = :perfilId AND END_DATE IS NULL`,
+            { perfilId },
+          )
+        : { rows: [] };
+
+      const idsDoTutor = new Set(vinculos.rows.map((linha) => linha[0]));
+      animais = animais.filter((animal) => idsDoTutor.has(animal.id));
+    }
 
     res.json({
       sucesso: true,
@@ -97,12 +116,21 @@ router.post("/", async (req, res) => {
       cor,
       especieId,
       racaId,
+      tutorEmail,
+      tutorNome,
     } = req.body;
 
     if (!nome || !genero || !especieId || !racaId) {
       return res.status(400).json({
         sucesso: false,
         mensagem: "Nome, gênero, espécie e raça são obrigatórios.",
+      });
+    }
+
+    if (!tutorEmail) {
+      return res.status(400).json({
+        sucesso: false,
+        mensagem: "O e-mail do tutor é obrigatório.",
       });
     }
 
@@ -160,13 +188,30 @@ router.post("/", async (req, res) => {
           type: require("oracledb").NUMBER,
         },
       },
-      { autoCommit: true },
     );
+
+    const animalId = resultado.outBinds.id[0];
+
+    // Animal e vínculo com o tutor entram na mesma transação
+    const perfilId = await obterOuCriarPerfilTutor(connection, tutorEmail, tutorNome);
+
+    await connection.execute(
+      `INSERT INTO T_ANIMAL_RESP (
+        RELATION_TYPE, IS_PRIMARY, START_DATE, CREATED_AT,
+        T_ANIMAL_ID, T_USER_PROFILE_ID
+      ) VALUES (
+        'TUTOR', 'S', TRUNC(SYSDATE), SYSTIMESTAMP,
+        :animalId, :perfilId
+      )`,
+      { animalId, perfilId },
+    );
+
+    await connection.commit();
 
     res.status(201).json({
       sucesso: true,
       mensagem: "Animal cadastrado no Oracle!",
-      id: resultado.outBinds.id[0],
+      id: animalId,
     });
   } catch (error) {
     console.error("Erro ao cadastrar animal:", error);
@@ -174,6 +219,70 @@ router.post("/", async (req, res) => {
     res.status(500).json({
       sucesso: false,
       mensagem: "Erro ao cadastrar animal no Oracle.",
+    });
+  } finally {
+    if (connection) {
+      await connection.close();
+    }
+  }
+});
+
+router.delete("/:id", async (req, res) => {
+  let connection;
+
+  try {
+    const animalId = Number(req.params.id);
+    const { tutorEmail } = req.query;
+
+    if (!Number.isInteger(animalId) || animalId <= 0 || !tutorEmail) {
+      return res.status(400).json({
+        sucesso: false,
+        mensagem: "ID do animal e e-mail do tutor são obrigatórios.",
+      });
+    }
+
+    connection = await conectarOracle();
+
+    const perfilId = await buscarPerfilTutor(connection, tutorEmail);
+
+    const vinculo = perfilId
+      ? await connection.execute(
+          `SELECT COUNT(*) FROM T_ANIMAL_RESP
+            WHERE T_ANIMAL_ID = :animalId AND T_USER_PROFILE_ID = :perfilId`,
+          { animalId, perfilId },
+        )
+      : { rows: [[0]] };
+
+    if (vinculo.rows[0][0] === 0) {
+      return res.status(404).json({
+        sucesso: false,
+        mensagem: "Animal não encontrado para este tutor.",
+      });
+    }
+
+    await connection.execute(
+      `DELETE FROM T_ANIMAL_RESP WHERE T_ANIMAL_ID = :animalId`,
+      { animalId },
+    );
+    await connection.execute(`DELETE FROM T_ANIMAL WHERE ID = :animalId`, { animalId });
+
+    await connection.commit();
+
+    res.json({
+      sucesso: true,
+      mensagem: "Animal removido do Oracle.",
+    });
+  } catch (error) {
+    console.error("Erro ao remover animal:", error);
+
+    // ORA-02292: animal ainda referenciado (consultas, prontuários)
+    const referenciado = error.errorNum === 2292;
+
+    res.status(referenciado ? 409 : 500).json({
+      sucesso: false,
+      mensagem: referenciado
+        ? "Este animal possui consultas ou prontuários e não pode ser removido."
+        : "Erro ao remover animal no Oracle.",
     });
   } finally {
     if (connection) {
