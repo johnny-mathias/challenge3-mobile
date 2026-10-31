@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -10,7 +11,7 @@ import {
 
 import { useNavigation } from '@react-navigation/native';
 
-import { useMyAnimals, useMyOracleAnimals } from '../hooks/queries';
+import { useAllOracleAnimals, useMyAnimals, useMyOracleAnimals } from '../hooks/queries';
 import { useAnimalMutations } from '../hooks/useAnimalMutations';
 import { useOracleAnimalMutations } from '../hooks/useOracleAnimalMutations';
 import { useTheme } from '../theme/ThemeProvider';
@@ -23,6 +24,13 @@ type PetItem =
   | { source: 'api'; animal: AnimalDTO }
   | { source: 'oracle'; animal: OracleAnimal };
 
+type PetsView = 'mine' | 'all';
+
+const VIEW_TITLES: Record<PetsView, string> = {
+  mine: 'Meus Pets',
+  all: 'Todos os Pets',
+};
+
 function describeOracleAnimal(animal: OracleAnimal) {
   const parts = [animal.especie, animal.raca && `${animal.raca} (${animal.porte})`];
   if (animal.peso != null) parts.push(`${animal.peso}kg`);
@@ -34,18 +42,48 @@ export default function PetsScreen() {
   const styles = createStyles(theme);
   const navigation = useNavigation<any>();
 
+  const [view, setView] = useState<PetsView>('mine');
+
   const apiAnimals = useMyAnimals();
   const oracleAnimals = useMyOracleAnimals();
+  const allOracleAnimals = useAllOracleAnimals(view === 'all');
   const { deleteAnimal } = useAnimalMutations();
   const { deleteOracleAnimal } = useOracleAnimalMutations();
 
-  const isLoading = apiAnimals.isLoading || oracleAnimals.isLoading;
-  const isError = apiAnimals.isError && oracleAnimals.isError;
+  const isLoading =
+    view === 'mine'
+      ? apiAnimals.isLoading || oracleAnimals.isLoading
+      : allOracleAnimals.isLoading;
+  const isError =
+    view === 'mine' ? apiAnimals.isError && oracleAnimals.isError : allOracleAnimals.isError;
+  const hasPartialError = view === 'mine' && (apiAnimals.isError || oracleAnimals.isError);
 
-  const pets: PetItem[] = [
-    ...(oracleAnimals.data ?? []).map((animal) => ({ source: 'oracle' as const, animal })),
-    ...(apiAnimals.data ?? []).map((animal) => ({ source: 'api' as const, animal })),
-  ];
+  // "Todos os Pets" mostra o registro completo do Oracle; só os pets do tutor podem ser removidos
+  const myOracleIds = new Set((oracleAnimals.data ?? []).map((animal) => animal.id));
+
+  const pets: PetItem[] =
+    view === 'mine'
+      ? [
+          ...(oracleAnimals.data ?? []).map((animal) => ({ source: 'oracle' as const, animal })),
+          ...(apiAnimals.data ?? []).map((animal) => ({ source: 'api' as const, animal })),
+        ]
+      : (allOracleAnimals.data ?? []).map((animal) => ({ source: 'oracle' as const, animal }));
+
+  function canRemove(item: PetItem) {
+    return item.source === 'api' || myOracleIds.has(item.animal.id);
+  }
+
+  function toggleView() {
+    setView((current) => (current === 'mine' ? 'all' : 'mine'));
+  }
+
+  const viewToggle = (
+    <TouchableOpacity style={styles.viewToggle} onPress={toggleView}>
+      <Text style={styles.viewToggleText}>
+        {view === 'mine' ? `Ver ${VIEW_TITLES.all}` : `Ver ${VIEW_TITLES.mine}`}
+      </Text>
+    </TouchableOpacity>
+  );
 
   function confirmDelete(name: string, onConfirm: () => Promise<unknown>) {
     Alert.alert('Remover pet', `Remover ${name}?`, [
@@ -80,7 +118,12 @@ export default function PetsScreen() {
   if (isError) {
     return (
       <View style={styles.centered}>
-        <Text style={styles.errorText}>Não foi possível carregar seus pets</Text>
+        <Text style={styles.errorText}>
+          {view === 'mine'
+            ? 'Não foi possível carregar seus pets'
+            : 'Não foi possível carregar os pets da SuperBicho'}
+        </Text>
+        {viewToggle}
       </View>
     );
   }
@@ -92,15 +135,23 @@ export default function PetsScreen() {
         data={pets}
         keyExtractor={(item) => `${item.source}-${item.animal.id}`}
         ListHeaderComponent={
-          apiAnimals.isError || oracleAnimals.isError ? (
-            <Text style={styles.warningText}>
-              Alguns pets não puderam ser carregados. Tente novamente em instantes.
-            </Text>
-          ) : null
+          <View>
+            <Text style={styles.viewTitle}>{VIEW_TITLES[view]}</Text>
+            {hasPartialError && (
+              <Text style={styles.warningText}>
+                Alguns pets não puderam ser carregados. Tente novamente em instantes.
+              </Text>
+            )}
+          </View>
         }
         ListEmptyComponent={
-          <Text style={styles.emptyText}>Você ainda não cadastrou nenhum pet</Text>
+          <Text style={styles.emptyText}>
+            {view === 'mine'
+              ? 'Você ainda não cadastrou nenhum pet'
+              : 'Nenhum pet registrado na SuperBicho'}
+          </Text>
         }
+        ListFooterComponent={viewToggle}
         renderItem={({ item }) => (
           <View style={styles.card}>
             {item.source === 'oracle' ? (
@@ -120,23 +171,25 @@ export default function PetsScreen() {
               </View>
             )}
 
-            <View style={styles.actions}>
-              {item.source === 'api' && (
-                <TouchableOpacity
-                  style={styles.editButton}
-                  onPress={() => navigation.navigate('AnimalFormScreen', { animal: item.animal })}
-                >
-                  <Text style={styles.actionText}>Editar</Text>
-                </TouchableOpacity>
-              )}
+            {canRemove(item) && (
+              <View style={styles.actions}>
+                {item.source === 'api' && (
+                  <TouchableOpacity
+                    style={styles.editButton}
+                    onPress={() => navigation.navigate('AnimalFormScreen', { animal: item.animal })}
+                  >
+                    <Text style={styles.actionText}>Editar</Text>
+                  </TouchableOpacity>
+                )}
 
-              <TouchableOpacity
-                style={styles.deleteButton}
-                onPress={() => handleDelete(item)}
-              >
-                <Text style={styles.actionText}>Remover</Text>
-              </TouchableOpacity>
-            </View>
+                <TouchableOpacity
+                  style={styles.deleteButton}
+                  onPress={() => handleDelete(item)}
+                >
+                  <Text style={styles.actionText}>Remover</Text>
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
         )}
       />
@@ -172,6 +225,31 @@ const createStyles = (theme: (typeof themes)['light']) =>
 
     listContent: {
       padding: 20,
+      // espaço para o botão "Cadastrar" flutuante não cobrir o fim da lista
+      paddingBottom: 110,
+    },
+
+    viewTitle: {
+      fontSize: 13,
+      fontWeight: '600',
+      color: theme.colors.textSecondary,
+      textTransform: 'uppercase',
+      marginBottom: 12,
+    },
+
+    viewToggle: {
+      alignSelf: 'center',
+      marginTop: 8,
+      paddingVertical: 10,
+      paddingHorizontal: 20,
+      borderRadius: 20,
+      borderWidth: 1,
+      borderColor: theme.colors.primary,
+    },
+
+    viewToggleText: {
+      color: theme.colors.primary,
+      fontWeight: 'bold',
     },
 
     warningText: {
