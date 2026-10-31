@@ -71,3 +71,13 @@ export async function deleteOracleAnimal(id: number, tutorEmail: string): Promis
     throw toError(error);
   }
 }
+
+// Todos os animais via PKG_ANIMAL.PR_LISTAR_ANIMAIS_JSON (dataset para o MongoDB)
+export async function getAllOracleAnimals(): Promise<OracleAnimal[]> {
+  try {
+    const { data } = await oracleClient.get<{ animais: OracleAnimal[] }>('/animals');
+    return data.animais;
+  } catch (error) {
+    throw toError(error);
+  }
+}

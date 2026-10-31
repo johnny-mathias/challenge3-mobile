@@ -29,7 +29,8 @@
     "plugins": [
       "expo-image",
       "expo-status-bar",
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      "expo-sharing"
     ]
   }
 }

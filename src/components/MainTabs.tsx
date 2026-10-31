@@ -5,6 +5,7 @@ import ServicesScreen from "../screens/ServicesScreen";
 
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import PetsScreen from "../screens/PetsScreen";
+import ExportAnimalsButton from "./ExportAnimalsButton";
 
 import { useTheme } from "../theme/ThemeProvider";
 
@@ -84,6 +85,7 @@ export default function MainTabs() {
           headerTitleStyle: {
             color: colors.text,
           },
+          headerRight: () => <ExportAnimalsButton />,
           headerShown: true,
           headerStyle: {
             backgroundColor: colors.backgroundSecondary,
