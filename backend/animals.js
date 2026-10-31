@@ -115,6 +115,18 @@ router.post("/", async (req, res) => {
 
     connection = await conectarOracle();
 
+    const racaDaEspecie = await connection.execute(
+      `SELECT COUNT(*) FROM T_BREED WHERE ID = :racaId AND T_SPECIES_ID = :especieId`,
+      { racaId, especieId },
+    );
+
+    if (racaDaEspecie.rows[0][0] === 0) {
+      return res.status(400).json({
+        sucesso: false,
+        mensagem: "A raça informada não pertence à espécie selecionada.",
+      });
+    }
+
     const resultado = await connection.execute(
       `INSERT INTO T_ANIMAL (
         NAME, NICKNAME, GENDER, BIRTH_DATE,
