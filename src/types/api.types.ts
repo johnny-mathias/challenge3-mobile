@@ -59,6 +59,9 @@ export interface OracleAnimalInput {
   tutorNome?: string;
 }
 
+// T_USER_PROFILE.PROFILE_TYPE: só ADMIN acessa a área Node/Oracle
+export type UserRole = 'ADMIN' | 'TUTOR';
+
 // Formato gerado por PKG_ANIMAL.FN_ANIMAL_TO_JSON
 export interface OracleAnimal {
   id: number;

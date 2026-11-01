@@ -11,7 +11,12 @@ import {
 
 import { useNavigation } from '@react-navigation/native';
 
-import { useAllOracleAnimals, useMyAnimals, useMyOracleAnimals } from '../hooks/queries';
+import {
+  useAllOracleAnimals,
+  useIsAdmin,
+  useMyAnimals,
+  useMyOracleAnimals,
+} from '../hooks/queries';
 import { useAnimalMutations } from '../hooks/useAnimalMutations';
 import { useOracleAnimalMutations } from '../hooks/useOracleAnimalMutations';
 import { useTheme } from '../theme/ThemeProvider';
@@ -19,7 +24,8 @@ import { themes } from '../theme/theme';
 
 import type { AnimalDTO, OracleAnimal } from '../types/api.types';
 
-// Pets vêm de duas fontes: API Java (sprints anteriores) e backend Node/Oracle
+// "Meus Pets" vem da API Java (todos os usuários); "Todos os Pets" vem do backend
+// Node/Oracle e só é exibido para usuários com role ADMIN
 type PetItem =
   | { source: 'api'; animal: AnimalDTO }
   | { source: 'oracle'; animal: OracleAnimal };
@@ -42,31 +48,26 @@ export default function PetsScreen() {
   const styles = createStyles(theme);
   const navigation = useNavigation<any>();
 
-  const [view, setView] = useState<PetsView>('mine');
+  const isAdmin = useIsAdmin();
+  const [selectedView, setView] = useState<PetsView>('mine');
+  const view: PetsView = isAdmin ? selectedView : 'mine';
 
   const apiAnimals = useMyAnimals();
-  const oracleAnimals = useMyOracleAnimals();
+  const oracleAnimals = useMyOracleAnimals(isAdmin);
   const allOracleAnimals = useAllOracleAnimals(view === 'all');
   const { deleteAnimal } = useAnimalMutations();
   const { deleteOracleAnimal } = useOracleAnimalMutations();
 
-  const isLoading =
-    view === 'mine'
-      ? apiAnimals.isLoading || oracleAnimals.isLoading
-      : allOracleAnimals.isLoading;
-  const isError =
-    view === 'mine' ? apiAnimals.isError && oracleAnimals.isError : allOracleAnimals.isError;
-  const hasPartialError = view === 'mine' && (apiAnimals.isError || oracleAnimals.isError);
+  const activeQuery = view === 'mine' ? apiAnimals : allOracleAnimals;
+  const isLoading = activeQuery.isLoading;
+  const isError = activeQuery.isError;
 
-  // "Todos os Pets" mostra o registro completo do Oracle; só os pets do tutor podem ser removidos
+  // No Oracle, o admin só remove os pets vinculados a ele mesmo (T_ANIMAL_RESP)
   const myOracleIds = new Set((oracleAnimals.data ?? []).map((animal) => animal.id));
 
   const pets: PetItem[] =
     view === 'mine'
-      ? [
-          ...(oracleAnimals.data ?? []).map((animal) => ({ source: 'oracle' as const, animal })),
-          ...(apiAnimals.data ?? []).map((animal) => ({ source: 'api' as const, animal })),
-        ]
+      ? (apiAnimals.data ?? []).map((animal) => ({ source: 'api' as const, animal }))
       : (allOracleAnimals.data ?? []).map((animal) => ({ source: 'oracle' as const, animal }));
 
   function canRemove(item: PetItem) {
@@ -77,13 +78,16 @@ export default function PetsScreen() {
     setView((current) => (current === 'mine' ? 'all' : 'mine'));
   }
 
-  const viewToggle = (
+  const viewToggle = isAdmin ? (
     <TouchableOpacity style={styles.viewToggle} onPress={toggleView}>
       <Text style={styles.viewToggleText}>
         {view === 'mine' ? `Ver ${VIEW_TITLES.all}` : `Ver ${VIEW_TITLES.mine}`}
       </Text>
     </TouchableOpacity>
-  );
+  ) : null;
+
+  // Cadastro do usuário comum vai para a API Java; na visão do admin, para o Oracle
+  const createScreen = view === 'all' ? 'AnimalCreateScreen' : 'AnimalFormScreen';
 
   function confirmDelete(name: string, onConfirm: () => Promise<unknown>) {
     Alert.alert('Remover pet', `Remover ${name}?`, [
@@ -135,14 +139,7 @@ export default function PetsScreen() {
         data={pets}
         keyExtractor={(item) => `${item.source}-${item.animal.id}`}
         ListHeaderComponent={
-          <View>
-            <Text style={styles.viewTitle}>{VIEW_TITLES[view]}</Text>
-            {hasPartialError && (
-              <Text style={styles.warningText}>
-                Alguns pets não puderam ser carregados. Tente novamente em instantes.
-              </Text>
-            )}
-          </View>
+          <Text style={styles.viewTitle}>{VIEW_TITLES[view]}</Text>
         }
         ListEmptyComponent={
           <Text style={styles.emptyText}>
@@ -196,7 +193,7 @@ export default function PetsScreen() {
 
       <TouchableOpacity
         style={styles.fab}
-        onPress={() => navigation.navigate('AnimalCreateScreen')}
+        onPress={() => navigation.navigate(createScreen)}
       >
         <Text style={styles.fabText}>Cadastrar</Text>
       </TouchableOpacity>
@@ -250,12 +247,6 @@ const createStyles = (theme: (typeof themes)['light']) =>
     viewToggleText: {
       color: theme.colors.primary,
       fontWeight: 'bold',
-    },
-
-    warningText: {
-      color: theme.colors.remove,
-      textAlign: 'center',
-      marginBottom: 14,
     },
 
     emptyText: {

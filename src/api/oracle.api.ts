@@ -7,6 +7,7 @@ import type {
   OracleAnimalInput,
   OracleBreed,
   OracleSpecies,
+  UserRole,
 } from '../types/api.types';
 
 export const oracleClient = axios.create({
@@ -77,6 +78,17 @@ export async function getAllOracleAnimals(): Promise<OracleAnimal[]> {
   try {
     const { data } = await oracleClient.get<{ animais: OracleAnimal[] }>('/animals');
     return data.animais;
+  } catch (error) {
+    throw toError(error);
+  }
+}
+
+export async function getUserRole(email: string): Promise<UserRole> {
+  try {
+    const { data } = await oracleClient.get<{ perfil: UserRole }>('/usuarios/perfil', {
+      params: { email },
+    });
+    return data.perfil;
   } catch (error) {
     throw toError(error);
   }

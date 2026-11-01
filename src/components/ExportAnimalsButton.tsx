@@ -2,6 +2,7 @@ import { ActivityIndicator, Alert, Platform, StyleSheet, TouchableOpacity } from
 
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 
+import { useIsAdmin } from '../hooks/queries';
 import { useExportAnimals } from '../hooks/useExportAnimals';
 import { useTheme } from '../theme/ThemeProvider';
 import { themes } from '../theme/theme';
@@ -13,6 +14,7 @@ const EXPORT_WARNING_MESSAGE =
 export default function ExportAnimalsButton() {
   const theme = useTheme();
   const styles = createStyles(theme);
+  const isAdmin = useIsAdmin();
   const { exportAnimals, isExporting } = useExportAnimals();
 
   async function startExport() {
@@ -36,6 +38,9 @@ export default function ExportAnimalsButton() {
       { text: 'Baixar', onPress: startExport },
     ]);
   }
+
+  // Exportação do dataset Oracle → MongoDB é uma ação de admin
+  if (!isAdmin) return null;
 
   return (
     <TouchableOpacity

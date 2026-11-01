@@ -9,6 +9,7 @@ import {
   getBreedsBySpecies,
   getOracleAnimalsByTutor,
   getSpecies,
+  getUserRole,
 } from '../api/oracle.api';
 
 export function useMyAnimals() {
@@ -21,14 +22,28 @@ export function useMyAnimals() {
   });
 }
 
-export function useMyOracleAnimals() {
+export function useMyOracleAnimals(enabled = true) {
   const { guardian } = useAuth();
 
   return useQuery({
     queryKey: ['oracle', 'animals', guardian?.email],
     queryFn: () => getOracleAnimalsByTutor(guardian!.email),
-    enabled: !!guardian,
+    enabled: enabled && !!guardian,
   });
+}
+
+// Role do usuário logado no Oracle; enquanto carrega (ou se falhar) vale como usuário comum
+export function useIsAdmin() {
+  const { guardian } = useAuth();
+
+  const query = useQuery({
+    queryKey: ['oracle', 'role', guardian?.email],
+    queryFn: () => getUserRole(guardian!.email),
+    enabled: !!guardian,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  return query.data === 'ADMIN';
 }
 
 // Todos os animais registrados no Oracle (visão "Todos os Pets")
