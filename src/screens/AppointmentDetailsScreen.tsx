@@ -23,7 +23,7 @@ export default function AppointmentDetailsScreen() {
 
   const navigation = useNavigation<any>();
 
-  const { deleteAppointment } =
+  const { cancelAppointment } =
     useAppointments();
 
   const { appointment } = route.params as { appointment: AppointmentDTO };
@@ -87,7 +87,7 @@ export default function AppointmentDetailsScreen() {
         <TouchableOpacity
           style={styles.deleteButton}
           onPress={() => {
-            deleteAppointment(appointment.id);
+            cancelAppointment(appointment.id);
 
             navigation.goBack();
           }}

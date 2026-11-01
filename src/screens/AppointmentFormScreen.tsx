@@ -28,7 +28,7 @@ export default function AppointmentFormScreen() {
 
   const appointment: AppointmentDTO | undefined = route.params?.appointment;
 
-  const { createAppointment, updateAppointment, deleteAppointment } = useAppointments();
+  const { createAppointment, updateAppointment, cancelAppointment } = useAppointments();
 
   const { data: animals = [], isLoading: isLoadingAnimals } = useMyAnimals();
   const { data: clinics = [] } = useApprovedClinics();
@@ -133,7 +133,7 @@ export default function AppointmentFormScreen() {
         text: "Cancelar agendamento",
         style: "destructive",
         onPress: () => {
-          deleteAppointment(appointment!.id);
+          cancelAppointment(appointment!.id);
           navigation.goBack();
         },
       },
@@ -181,7 +181,7 @@ export default function AppointmentFormScreen() {
 
         {appointment && (
           <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
-            <Text style={styles.buttonText}>Excluir agendamento</Text>
+            <Text style={styles.buttonText}>Cancelar agendamento</Text>
           </TouchableOpacity>
         )}
       </ScrollView>

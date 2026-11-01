@@ -3,8 +3,9 @@ import { fetchCsrfToken } from './csrf';
 
 import type { AnimalDTO, AnimalInput } from '../types/api.types';
 
-export async function getAnimalsByGuardian(guardianId: number): Promise<AnimalDTO[]> {
-  const { data } = await apiClient.get<AnimalDTO[]>(`/animals/guardian/${guardianId}`);
+// A API identifica o tutor pela sessão: devolve só os pets do tutor logado
+export async function getMyAnimals(): Promise<AnimalDTO[]> {
+  const { data } = await apiClient.get<AnimalDTO[]>('/animals');
   return data;
 }
 

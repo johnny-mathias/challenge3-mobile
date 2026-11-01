@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 
 import { useAuth } from '../context/AuthProvider';
 
-import { getAnimalsByGuardian } from '../api/animals.api';
+import { getMyAnimals } from '../api/animals.api';
 import { getApprovedClinics } from '../api/clinics.api';
 import {
   getAllOracleAnimals,
@@ -17,7 +17,7 @@ export function useMyAnimals() {
 
   return useQuery({
     queryKey: ['animals', guardian?.id],
-    queryFn: () => getAnimalsByGuardian(guardian!.id),
+    queryFn: getMyAnimals,
     enabled: !!guardian,
   });
 }

@@ -1,13 +1,12 @@
 import { apiClient } from './client';
 import { fetchCsrfToken } from './csrf';
 
-import type { AppointmentDTO, AppointmentInput, Page } from '../types/api.types';
+import type { AppointmentDTO, AppointmentInput } from '../types/api.types';
 
-export async function getAppointmentsByGuardian(guardianName: string): Promise<AppointmentDTO[]> {
-  const { data } = await apiClient.get<Page<AppointmentDTO>>('/appointments', {
-    params: { size: 200 },
-  });
-  return data.content.filter((appointment) => appointment.guardianName === guardianName);
+// A API identifica o tutor pela sessão: devolve só os agendamentos do tutor logado
+export async function getMyAppointments(): Promise<AppointmentDTO[]> {
+  const { data } = await apiClient.get<AppointmentDTO[]>('/appointments');
+  return data;
 }
 
 export async function createAppointment(input: AppointmentInput): Promise<AppointmentDTO> {
@@ -26,9 +25,13 @@ export async function updateAppointment(id: number, input: AppointmentInput): Pr
   return data;
 }
 
-export async function deleteAppointment(id: number): Promise<void> {
+// A API não exclui agendamentos: o tutor cancela informando o motivo
+export async function cancelAppointment(id: number, reason: string): Promise<AppointmentDTO> {
   const csrf = await fetchCsrfToken();
-  await apiClient.delete(`/appointments/${id}`, {
-    headers: { 'X-CSRF-TOKEN': csrf },
-  });
+  const { data } = await apiClient.patch<AppointmentDTO>(
+    `/appointments/${id}/cancel`,
+    { reason },
+    { headers: { 'X-CSRF-TOKEN': csrf } },
+  );
+  return data;
 }

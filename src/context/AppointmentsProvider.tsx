@@ -9,15 +9,18 @@ import {
 import { useAuth } from './AuthProvider';
 
 import {
+  cancelAppointment as cancelAppointmentRequest,
   createAppointment as createAppointmentRequest,
-  deleteAppointment as deleteAppointmentRequest,
-  getAppointmentsByGuardian,
+  getMyAppointments,
   updateAppointment as updateAppointmentRequest,
 } from '../api/appointments.api';
 
 import type { AppointmentDTO, AppointmentInput } from '../types/api.types';
 
 const APPOINTMENTS_KEY = ['appointments'];
+
+const CANCELED_STATUS = 'CANCELADO';
+const GUARDIAN_CANCEL_REASON = 'Cancelado pelo tutor no aplicativo';
 
 interface AppointmentsContextData {
   appointments: AppointmentDTO[];
@@ -28,7 +31,7 @@ interface AppointmentsContextData {
 
   updateAppointment: (id: number, data: AppointmentInput) => void;
 
-  deleteAppointment: (id: number) => void;
+  cancelAppointment: (id: number) => void;
 }
 
 const AppointmentsContext =
@@ -41,14 +44,19 @@ export function AppointmentsProvider({ children }: any) {
   const { guardian } = useAuth();
 
   const {
-    data: appointments = [],
+    data: allAppointments = [],
     isLoading,
     isError,
   } = useQuery({
-    queryKey: [...APPOINTMENTS_KEY, guardian?.name],
-    queryFn: () => getAppointmentsByGuardian(guardian!.name),
+    queryKey: [...APPOINTMENTS_KEY, guardian?.email],
+    queryFn: getMyAppointments,
     enabled: !!guardian,
   });
+
+  // Cancelados continuam na API (com o motivo), mas saem da lista do tutor
+  const appointments = allAppointments.filter(
+    (appointment) => appointment.status !== CANCELED_STATUS,
+  );
 
   function invalidate() {
     queryClient.invalidateQueries({ queryKey: APPOINTMENTS_KEY });
@@ -65,8 +73,8 @@ export function AppointmentsProvider({ children }: any) {
     onSuccess: invalidate,
   });
 
-  const deleteMutation = useMutation({
-    mutationFn: deleteAppointmentRequest,
+  const cancelMutation = useMutation({
+    mutationFn: (id: number) => cancelAppointmentRequest(id, GUARDIAN_CANCEL_REASON),
     onSuccess: invalidate,
   });
 
@@ -78,7 +86,7 @@ export function AppointmentsProvider({ children }: any) {
         isError,
         createAppointment: (data) => createMutation.mutate(data),
         updateAppointment: (id, data) => updateMutation.mutate({ id, data }),
-        deleteAppointment: (id) => deleteMutation.mutate(id),
+        cancelAppointment: (id) => cancelMutation.mutate(id),
       }}
     >
       {children}
