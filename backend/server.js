@@ -2,6 +2,7 @@ require("dotenv").config();
 
 const animalsRoutes = require("./animals");
 const especiesRoutes = require("./especies");
+const usuariosRoutes = require("./usuarios");
 
 const cors = require("cors");
 const express = require("express");
@@ -12,6 +13,7 @@ app.use(cors());
 app.use(express.json());
 app.use("/api/animals", animalsRoutes);
 app.use("/api/especies", especiesRoutes);
+app.use("/api/usuarios", usuariosRoutes);
 
 app.get("/api/teste", async (req, res) => {
   let connection;
