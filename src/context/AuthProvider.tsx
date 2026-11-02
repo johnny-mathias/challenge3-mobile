@@ -15,6 +15,7 @@ import {
 } from 'firebase/auth';
 
 import { auth } from '../config/firebase';
+import { onSessionExpired } from '../api/client';
 import { ensureGuardianSession } from '../api/guardianAuth';
 import { getMyGuardian } from '../api/guardians.api';
 import { cancelAllAppointmentReminders } from '../services/appointmentReminders';
@@ -52,6 +53,10 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const [guardian, setGuardian] = useState<GuardianDTO | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [sessionExpired, setSessionExpired] = useState(false);
+
+  // Sessão da API Java perdida (servidor reiniciou): volta para o login com o
+  // aviso "Sua sessão expirou", em vez de deixar as telas quebrarem
+  useEffect(() => onSessionExpired(() => setSessionExpired(true)), []);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {

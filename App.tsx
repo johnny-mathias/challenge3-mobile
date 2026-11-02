@@ -2,7 +2,7 @@ import AppointmentDetailsScreen from "./src/screens/AppointmentDetailsScreen";
 import AppointmentFormScreen from "./src/screens/AppointmentFormScreen";
 
 import "react-native-gesture-handler";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ActivityIndicator, StyleSheet, Text, View, Image, TouchableOpacity } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
@@ -59,6 +59,12 @@ function AppContent() {
   const isLoggedIn = !!user && !!guardian && !sessionExpired;
 
   useReminderNavigation(navigationRef, isLoggedIn && isNavigationReady);
+
+  // Ao sair (logout ou sessão expirada), descarta os dados em cache: o próximo
+  // usuário — ou a mesma pessoa depois de entrar de novo — busca tudo do zero
+  useEffect(() => {
+    if (!isLoggedIn) queryClient.clear();
+  }, [isLoggedIn]);
 
   if (isLoading) {
     return (
