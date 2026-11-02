@@ -94,7 +94,7 @@ npx expo start
 
 Depois é só escanear o QR Code com o app Expo Go, ou pressionar `a` (Android) / `i` (iOS) no terminal para abrir num emulador/simulador.
 
-> As duas APIs rodam no plano gratuito do Render, que "dorme" depois de alguns minutos sem uso. A primeira requisição após um tempo parado pode demorar até um minuto enquanto o servidor acorda. Se uma tela mostrar erro, use **"Tentar novamente"** ou puxe a tela para baixo. A tela **Conta → Sobre o app** mostra se cada API já está online. Quando o Render reinicia a API Java (deploy ou volta do modo dormindo), a sessão do tutor é perdida no servidor; o app percebe o redirecionamento para `/login` e volta para a tela de login com o aviso *"Sua sessão expirou"*, já com o e-mail preenchido.
+> As duas APIs rodam no plano gratuito do Render, que "dorme" depois de alguns minutos sem uso. A primeira requisição após um tempo parado pode demorar até um minuto enquanto o servidor acorda. Se uma tela mostrar erro, use **"Tentar novamente"** ou puxe a tela para baixo. A tela **Conta → Sobre o app** mostra se cada API já está online. Quando o Render reinicia a API Java (deploy ou volta do modo dormindo), a sessão do tutor é perdida no servidor; o app percebe o redirecionamento para `/login` e volta para a tela de login com o aviso *"Sua sessão expirou"*, já com o e-mail preenchido. No login e no cadastro, o app espera a API Java acordar antes de abrir a sessão, para a primeira entrada do dia não falhar por causa do Render.
 
 > **Notificações no Expo Go:** os lembretes são notificações *locais* e funcionam no Expo Go e no APK. O app importa só os módulos locais do `expo-notifications` (ver [`src/services/notifications.ts`](src/services/notifications.ts)), porque o pacote completo tenta registrar push remoto e isso derruba o Expo Go no Android desde o SDK 53. O Expo Go também não deixa o app criar um canal de notificação próprio nem agendar alarmes exatos, então lá o Android pode atrasar o lembrete em até ~1h. No APK, o app declara `USE_EXACT_ALARM` e o lembrete sai no horário exato. Se a permissão de notificações estiver desligada, ela pode ser pedida de novo em **Conta → Notificações** ou em **Conta → Sobre o app → Lembretes de consulta**.
 
@@ -158,7 +158,8 @@ COMMIT;
 
 O app é distribuído pelo **Firebase App Distribution**. A versão publicada corresponde ao commit exibido em **Conta → Sobre o app**.
 
-- Link de acesso: *(adicionado após a publicação)*
+- **Versão publicada:** 1.0.0 (build 1), gerada do commit [`523e3e3`](https://github.com/johnny-mathias/challenge3-mobile/commit/523e3e3b05f8344c2dbfa47f6e620f3640615481)
+- **Link para testers:** [Firebase App Distribution](https://appdistribution.firebase.google.com/testerapps/1:56038513662:android:dffb0fa3bdc14d43a23eaf/releases/59upd0151amtg). O acesso é por convite: o e-mail precisa estar cadastrado como tester no console do Firebase (*App Distribution → Testers & Groups*).
 - Pacote Android: `com.superbicho.app` (app Android registrado no mesmo projeto Firebase do login)
 - Projeto no Expo: [`@johnny-mathias/SuperBicho`](https://expo.dev/accounts/johnny-mathias/projects/SuperBicho)
 

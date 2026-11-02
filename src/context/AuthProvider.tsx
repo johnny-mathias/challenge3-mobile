@@ -3,6 +3,7 @@ import {
   createContext,
   useContext,
   useEffect,
+  useRef,
   useState,
 } from 'react';
 
@@ -18,6 +19,7 @@ import { auth } from '../config/firebase';
 import { onSessionExpired } from '../api/client';
 import { ensureGuardianSession } from '../api/guardianAuth';
 import { getMyGuardian } from '../api/guardians.api';
+import { wakeJavaApi } from '../api/health.api';
 import { cancelAllAppointmentReminders } from '../services/appointmentReminders';
 
 import type { GuardianDTO } from '../types/api.types';
@@ -54,13 +56,30 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const [isLoading, setIsLoading] = useState(true);
   const [sessionExpired, setSessionExpired] = useState(false);
 
+  // Enquanto login/cadastro estão em andamento, a sessão da API Java ainda não
+  // existe: o aviso do Firebase (onAuthStateChanged) e os redirecionamentos para
+  // /login nesse meio-tempo não significam sessão expirada
+  const authInProgress = useRef(false);
+
   // Sessão da API Java perdida (servidor reiniciou): volta para o login com o
   // aviso "Sua sessão expirou", em vez de deixar as telas quebrarem
-  useEffect(() => onSessionExpired(() => setSessionExpired(true)), []);
+  useEffect(
+    () =>
+      onSessionExpired(() => {
+        if (!authInProgress.current) setSessionExpired(true);
+      }),
+    [],
+  );
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser);
+
+      // login()/register() buscam o tutor depois de abrir a sessão na API Java
+      if (authInProgress.current) {
+        setIsLoading(false);
+        return;
+      }
 
       if (firebaseUser?.email) {
         try {
@@ -82,18 +101,32 @@ export function AuthProvider({ children }: PropsWithChildren) {
     return unsubscribe;
   }, []);
 
-  async function login(email: string, password: string) {
-    await signInWithEmailAndPassword(auth, email, password);
-    await ensureGuardianSession(email.split('@')[0], email, password);
-    setGuardian(await getMyGuardianWithRetry(email));
-    setSessionExpired(false);
+  async function openSession(action: () => Promise<void>) {
+    authInProgress.current = true;
+    try {
+      await action();
+      setSessionExpired(false);
+    } finally {
+      authInProgress.current = false;
+    }
   }
 
-  async function register(name: string, email: string, password: string) {
-    await createUserWithEmailAndPassword(auth, email, password);
-    await ensureGuardianSession(name, email, password);
-    setGuardian(await getMyGuardianWithRetry(email));
-    setSessionExpired(false);
+  function login(email: string, password: string) {
+    return openSession(async () => {
+      await signInWithEmailAndPassword(auth, email, password);
+      await wakeJavaApi();
+      await ensureGuardianSession(email.split('@')[0], email, password);
+      setGuardian(await getMyGuardianWithRetry(email));
+    });
+  }
+
+  function register(name: string, email: string, password: string) {
+    return openSession(async () => {
+      await createUserWithEmailAndPassword(auth, email, password);
+      await wakeJavaApi();
+      await ensureGuardianSession(name, email, password);
+      setGuardian(await getMyGuardianWithRetry(email));
+    });
   }
 
   async function logout() {

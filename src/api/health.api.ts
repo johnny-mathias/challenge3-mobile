@@ -14,3 +14,16 @@ export async function checkOracleApi(): Promise<ServiceStatus> {
   const { status } = await oracleClient.get('/teste', { validateStatus: () => true });
   return status < 500 ? 'online' : 'degraded';
 }
+
+// Antes do login na API Java: o Render pode levar quase um minuto para acordar
+// e derrubar as primeiras conexões. Espera o servidor responder (uma nova
+// tentativa se a primeira falhar) para o login não morrer no meio do caminho.
+export async function wakeJavaApi() {
+  const request = () =>
+    apiClient.get('/login', { timeout: 90000, validateStatus: () => true });
+  try {
+    await request();
+  } catch {
+    await request();
+  }
+}
