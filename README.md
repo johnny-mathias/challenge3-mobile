@@ -159,6 +159,17 @@ COMMIT;
 O app é distribuído pelo **Firebase App Distribution**. A versão publicada corresponde ao commit exibido em **Conta → Sobre o app**.
 
 - Link de acesso: *(adicionado após a publicação)*
+- Pacote Android: `com.superbicho.app` (app Android registrado no mesmo projeto Firebase do login)
+- Projeto no Expo: [`@johnny-mathias/SuperBicho`](https://expo.dev/accounts/johnny-mathias/projects/SuperBicho)
+
+Para gerar uma nova versão (APK) e publicar:
+
+```bash
+npx eas-cli build --platform android --profile preview
+npx firebase-tools appdistribution:distribute <arquivo>.apk --app 1:56038513662:android:dffb0fa3bdc14d43a23eaf --testers "email@exemplo.com"
+```
+
+O build sai do último commit enviado: commite antes de rodar, para o hash em **Sobre o app** bater com o repositório.
 
 ## Estrutura do projeto
 
