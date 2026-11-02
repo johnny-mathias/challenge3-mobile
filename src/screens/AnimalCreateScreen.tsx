@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   Modal,
   Platform,
@@ -14,9 +15,11 @@ import {
 
 import DateTimePicker from '@react-native-community/datetimepicker';
 
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 
-import { useBreeds, useSpecies } from '../hooks/queries';
+import ErrorState from '../components/ErrorState';
+import RemovePetButton from '../components/RemovePetButton';
+import { useBreeds, useOracleAnimal, useSpecies } from '../hooks/queries';
 import { useOracleAnimalMutations } from '../hooks/useOracleAnimalMutations';
 import { useRefreshControl } from '../hooks/useRefreshControl';
 import { useTheme } from '../theme/ThemeProvider';
@@ -42,9 +45,17 @@ function parseDecimal(value: string) {
 
 export default function AnimalCreateScreen() {
   const theme = useTheme();
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const styles = createStyles(theme);
   const navigation = useNavigation<any>();
+  const route = useRoute<any>();
+
+  // Sem animalId: cadastro novo. Com animalId: edição (e remoção) de um animal do
+  // próprio admin no Oracle
+  const animalId: number | null = route.params?.animalId ?? null;
+  const isEditing = animalId != null;
+  const existing = useOracleAnimal(animalId);
+  const filledFromExisting = useRef(false);
 
   const [nome, setNome] = useState('');
   const [apelido, setApelido] = useState('');
@@ -70,7 +81,38 @@ export default function AnimalCreateScreen() {
     ...(especieId != null ? [breeds.refetch] : []),
   );
 
-  const { createOracleAnimal, isCreating } = useOracleAnimalMutations();
+  const {
+    createOracleAnimal,
+    isCreating,
+    updateOracleAnimal,
+    isUpdating,
+    deleteOracleAnimal,
+  } = useOracleAnimalMutations();
+  const isSaving = isCreating || isUpdating;
+
+  useLayoutEffect(() => {
+    if (isEditing) navigation.setOptions({ title: t('nav.editPet') });
+  }, [isEditing, language]);
+
+  // Preenche o formulário uma vez, quando o animal carrega
+  useEffect(() => {
+    const animal = existing.data;
+    if (!animal || filledFromExisting.current) return;
+    filledFromExisting.current = true;
+
+    setNome(animal.nome);
+    setApelido(animal.apelido ?? '');
+    setGenero(animal.genero);
+    setEspecieId(animal.especieId);
+    setRacaId(animal.racaId);
+    setDataNascimento(animal.dataNascimento ?? '');
+    setCastrado(animal.castrado);
+    setPeso(animal.peso != null ? String(animal.peso) : '');
+    setAltura(animal.altura != null ? String(animal.altura) : '');
+    setCor(animal.cor ?? '');
+    setRga(animal.rga ?? '');
+    setMicrochip(animal.microchip ?? '');
+  }, [existing.data]);
 
   const selectedSpecies = species.data?.find((s) => s.id === especieId);
   const selectedBreed = breeds.data?.find((b) => b.id === racaId);
@@ -139,12 +181,34 @@ export default function AnimalCreateScreen() {
     }
 
     try {
-      const id = await createOracleAnimal(input);
-      Alert.alert(t('oraclePet.savedTitle'), t('oraclePet.savedMessage', { name: input.nome, id }));
+      if (isEditing) {
+        await updateOracleAnimal(animalId!, input);
+      } else {
+        const id = await createOracleAnimal(input);
+        Alert.alert(t('oraclePet.savedTitle'), t('oraclePet.savedMessage', { name: input.nome, id }));
+      }
       navigation.goBack();
     } catch (err: any) {
       setError(err?.message ?? t('petForm.saveError'));
     }
+  }
+
+  if (isEditing && existing.isLoading) {
+    return (
+      <View style={[styles.container, styles.centered]}>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
+      </View>
+    );
+  }
+
+  if (isEditing && existing.isError) {
+    return (
+      <ErrorState
+        title={t('petForm.loadError')}
+        error={existing.error}
+        onRetry={existing.refetch}
+      />
+    );
   }
 
   return (
@@ -281,14 +345,25 @@ export default function AnimalCreateScreen() {
         {error && <Text style={styles.errorText}>{error}</Text>}
 
         <TouchableOpacity
-          style={[styles.button, isCreating && styles.disabled]}
+          style={[styles.button, isEditing && styles.buttonAboveRemove, isSaving && styles.disabled]}
           onPress={handleSave}
-          disabled={isCreating}
+          disabled={isSaving}
         >
           <Text style={styles.buttonText}>
-            {isCreating ? t('common.saving') : t('petForm.create')}
+            {isSaving
+              ? t('common.saving')
+              : isEditing
+                ? t('common.saveChanges')
+                : t('petForm.create')}
           </Text>
         </TouchableOpacity>
+
+        {isEditing && (
+          <RemovePetButton
+            name={existing.data?.nome ?? nome}
+            onRemove={() => deleteOracleAnimal(animalId!)}
+          />
+        )}
       </ScrollView>
 
       <Modal
@@ -506,6 +581,15 @@ const createStyles = (theme: (typeof themes)['light']) =>
     selectedItemText: {
       fontWeight: 'bold',
       color: theme.colors.primary,
+    },
+
+    centered: {
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+
+    buttonAboveRemove: {
+      marginBottom: 16,
     },
 
     button: {

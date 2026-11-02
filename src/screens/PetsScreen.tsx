@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   FlatList,
   StyleSheet,
   Text,
@@ -20,8 +19,6 @@ import {
   useMyAnimals,
   useMyOracleAnimals,
 } from '../hooks/queries';
-import { useAnimalMutations } from '../hooks/useAnimalMutations';
-import { useOracleAnimalMutations } from '../hooks/useOracleAnimalMutations';
 import { useRefreshControl } from '../hooks/useRefreshControl';
 import { useTheme } from '../theme/ThemeProvider';
 import { useTranslation } from '../i18n';
@@ -62,8 +59,6 @@ export default function PetsScreen() {
   const apiAnimals = useMyAnimals();
   const oracleAnimals = useMyOracleAnimals(isAdmin);
   const allOracleAnimals = useAllOracleAnimals(view === 'all');
-  const { deleteAnimal } = useAnimalMutations();
-  const { deleteOracleAnimal } = useOracleAnimalMutations();
 
   const activeQuery = view === 'mine' ? apiAnimals : allOracleAnimals;
   const isLoading = activeQuery.isLoading;
@@ -77,7 +72,7 @@ export default function PetsScreen() {
     () => queryClient.refetchQueries({ queryKey: ['oracle', 'role'] }),
   );
 
-  // No Oracle, o admin só remove os pets vinculados a ele mesmo (T_ANIMAL_RESP)
+  // No Oracle, o admin só edita/remove os pets vinculados a ele mesmo (T_ANIMAL_RESP)
   const myOracleIds = new Set((oracleAnimals.data ?? []).map((animal) => animal.id));
 
   const pets: PetItem[] =
@@ -85,8 +80,17 @@ export default function PetsScreen() {
       ? (apiAnimals.data ?? []).map((animal) => ({ source: 'api' as const, animal }))
       : (allOracleAnimals.data ?? []).map((animal) => ({ source: 'oracle' as const, animal }));
 
-  function canRemove(item: PetItem) {
+  function canEdit(item: PetItem) {
     return item.source === 'api' || myOracleIds.has(item.animal.id);
+  }
+
+  // Remover fica na tela de edição de cada pet (Java ou Oracle)
+  function openEdit(item: PetItem) {
+    if (item.source === 'api') {
+      navigation.navigate('AnimalFormScreen', { animal: item.animal });
+    } else {
+      navigation.navigate('AnimalCreateScreen', { animalId: item.animal.id });
+    }
   }
 
   function toggleView() {
@@ -103,28 +107,6 @@ export default function PetsScreen() {
 
   // Cadastro do usuário comum vai para a API Java; na visão do admin, para o Oracle
   const createScreen = view === 'all' ? 'AnimalCreateScreen' : 'AnimalFormScreen';
-
-  function confirmDelete(name: string, onConfirm: () => Promise<unknown>) {
-    Alert.alert(t('pets.removeTitle'), t('pets.removeConfirm', { name }), [
-      { text: t('common.cancel'), style: 'cancel' },
-      {
-        text: t('common.remove'),
-        style: 'destructive',
-        onPress: () =>
-          onConfirm().catch((error: Error) =>
-            Alert.alert(t('pets.removeError'), error.message),
-          ),
-      },
-    ]);
-  }
-
-  function handleDelete(item: PetItem) {
-    if (item.source === 'oracle') {
-      confirmDelete(item.animal.nome, () => deleteOracleAnimal(item.animal.id));
-    } else {
-      confirmDelete(item.animal.name, () => deleteAnimal(item.animal.id));
-    }
-  }
 
   if (isLoading) {
     return (
@@ -187,22 +169,10 @@ export default function PetsScreen() {
               </View>
             )}
 
-            {canRemove(item) && (
+            {canEdit(item) && (
               <View style={styles.actions}>
-                {item.source === 'api' && (
-                  <TouchableOpacity
-                    style={styles.editButton}
-                    onPress={() => navigation.navigate('AnimalFormScreen', { animal: item.animal })}
-                  >
-                    <Text style={styles.actionText}>{t('common.edit')}</Text>
-                  </TouchableOpacity>
-                )}
-
-                <TouchableOpacity
-                  style={styles.deleteButton}
-                  onPress={() => handleDelete(item)}
-                >
-                  <Text style={styles.actionText}>{t('common.remove')}</Text>
+                <TouchableOpacity style={styles.editButton} onPress={() => openEdit(item)}>
+                  <Text style={styles.actionText}>{t('common.edit')}</Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -300,12 +270,6 @@ const createStyles = (theme: (typeof themes)['light']) =>
       borderRadius: 8,
     },
 
-    deleteButton: {
-      backgroundColor: theme.colors.remove,
-      paddingHorizontal: 14,
-      paddingVertical: 8,
-      borderRadius: 8,
-    },
 
     actionText: {
       color: '#fff',

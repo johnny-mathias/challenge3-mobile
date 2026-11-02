@@ -7,6 +7,8 @@ import { getApprovedClinics } from '../api/clinics.api';
 import { checkJavaApi, checkOracleApi } from '../api/health.api';
 import {
   getAllOracleAnimals,
+  getArticles,
+  getOracleAnimal,
   getBreedsBySpecies,
   getOracleAnimalsByTutor,
   getSpecies,
@@ -54,6 +56,21 @@ export function useAllOracleAnimals(enabled: boolean) {
     queryFn: getAllOracleAnimals,
     enabled,
   });
+}
+
+// Animal do Oracle aberto para edição (só os do próprio tutor)
+export function useOracleAnimal(id: number | null) {
+  const { guardian } = useAuth();
+
+  return useQuery({
+    queryKey: ['oracle', 'animals', 'detail', id],
+    queryFn: () => getOracleAnimal(id!, guardian!.email),
+    enabled: id != null && !!guardian,
+  });
+}
+
+export function useArticles() {
+  return useQuery({ queryKey: ['articles'], queryFn: getArticles });
 }
 
 export function useApprovedClinics() {

@@ -10,6 +10,7 @@ import {
 
 import { useNavigation, useRoute } from '@react-navigation/native';
 
+import RemovePetButton from '../components/RemovePetButton';
 import { useAuth } from '../context/AuthProvider';
 import { useAnimalMutations } from '../hooks/useAnimalMutations';
 import { useTheme } from '../theme/ThemeProvider';
@@ -26,7 +27,7 @@ export default function AnimalFormScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const { guardian } = useAuth();
-  const { createAnimal, updateAnimal } = useAnimalMutations();
+  const { createAnimal, updateAnimal, deleteAnimal } = useAnimalMutations();
 
   const animal: AnimalDTO | undefined = route.params?.animal;
 
@@ -120,6 +121,10 @@ export default function AnimalFormScreen() {
           {isSubmitting ? t('common.saving') : animal ? t('common.saveChanges') : t('petForm.create')}
         </Text>
       </TouchableOpacity>
+
+      {animal && (
+        <RemovePetButton name={animal.name} onRemove={() => deleteAnimal(animal.id)} />
+      )}
     </ScrollView>
   );
 }
@@ -152,7 +157,7 @@ const createStyles = (theme: (typeof themes)['light']) =>
       padding: 16,
       borderRadius: 8,
       marginTop: 32,
-      marginBottom: 40,
+      marginBottom: 16,
     },
 
     buttonText: {

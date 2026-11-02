@@ -13,31 +13,49 @@ import { useNavigation } from "@react-navigation/native";
 
 import Article from "../components/Article";
 
-import articles from "../data/articles.json";
-
 import { themes } from "../theme/theme";
 import { useTheme } from "../theme/ThemeProvider";
 import { useTranslation } from "../i18n";
 import ServiceRow from "../components/ServiceRow";
 import { useAppointments } from "../context/AppointmentsProvider";
+import { useArticles } from "../hooks/queries";
+import { useRefreshControl } from "../hooks/useRefreshControl";
 
 const { width } = Dimensions.get("window");
 
 export default function HomeScreen() {
   const navigation = useNavigation<any>();
-  const { appointments, isLoading, isError } = useAppointments();
+  const { appointments, isLoading, isError, refetch } = useAppointments();
+  // Artigos vêm do Oracle (T_ARTICLE) pelo backend Node
+  const articles = useArticles();
+  const refreshControl = useRefreshControl(articles.refetch, refetch);
   const theme = useTheme();
   const { t } = useTranslation();
   const styles = createStyles(theme);
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={styles.container} refreshControl={refreshControl}>
       <View style={{ marginBottom: 12 }}>
+        {articles.isLoading && (
+          <View style={styles.articlesState}>
+            <ActivityIndicator size="large" color={theme.colors.primary} />
+          </View>
+        )}
+
+        {articles.isError && (
+          <View style={styles.articlesState}>
+            <Text style={styles.errorText}>{t("articles.loadError")}</Text>
+            <TouchableOpacity onPress={() => articles.refetch()}>
+              <Text style={styles.retryText}>{t("common.retry")}</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
         <FlatList
           horizontal
           pagingEnabled
           showsHorizontalScrollIndicator={false}
-          data={articles}
+          data={articles.data ?? []}
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => (
             <TouchableOpacity
@@ -111,6 +129,19 @@ const createStyles = (theme: (typeof themes)["light"]) =>
     container: {
       flex: 1,
       backgroundColor: theme.colors.background,
+    },
+
+    articlesState: {
+      minHeight: 180,
+      alignItems: "center",
+      justifyContent: "center",
+      paddingHorizontal: 20,
+    },
+    retryText: {
+      marginTop: 10,
+      color: theme.colors.primary,
+      fontWeight: "bold",
+      fontSize: 15,
     },
 
     cardWrapper: {

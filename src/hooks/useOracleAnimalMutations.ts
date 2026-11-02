@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { useAuth } from '../context/AuthProvider';
-import { createOracleAnimal, deleteOracleAnimal } from '../api/oracle.api';
+import { createOracleAnimal, deleteOracleAnimal, updateOracleAnimal } from '../api/oracle.api';
 
 import type { OracleAnimalInput } from '../types/api.types';
 
@@ -22,6 +22,12 @@ export function useOracleAnimalMutations() {
     onSuccess: invalidate,
   });
 
+  const updateMutation = useMutation({
+    mutationFn: ({ id, input }: { id: number; input: NewOracleAnimal }) =>
+      updateOracleAnimal(id, { ...input, tutorEmail: guardian!.email }),
+    onSuccess: invalidate,
+  });
+
   const deleteMutation = useMutation({
     mutationFn: (id: number) => deleteOracleAnimal(id, guardian!.email),
     onSuccess: invalidate,
@@ -30,6 +36,9 @@ export function useOracleAnimalMutations() {
   return {
     createOracleAnimal: createMutation.mutateAsync,
     isCreating: createMutation.isPending,
+    updateOracleAnimal: (id: number, input: NewOracleAnimal) =>
+      updateMutation.mutateAsync({ id, input }),
+    isUpdating: updateMutation.isPending,
     deleteOracleAnimal: deleteMutation.mutateAsync,
   };
 }

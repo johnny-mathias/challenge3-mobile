@@ -59,6 +59,23 @@ export interface OracleAnimalInput {
   tutorNome?: string;
 }
 
+// Animal do Oracle para a tela de edição (GET /api/animals/:id)
+export interface OracleAnimalDetails {
+  id: number;
+  nome: string;
+  apelido: string | null;
+  genero: 'M' | 'F';
+  dataNascimento: string | null; // YYYY-MM-DD
+  rga: string | null;
+  microchip: string | null;
+  castrado: boolean;
+  peso: number | null;
+  altura: number | null;
+  cor: string | null;
+  especieId: number;
+  racaId: number;
+}
+
 // T_USER_PROFILE.PROFILE_TYPE: só ADMIN acessa a área Node/Oracle
 export type UserRole = 'ADMIN' | 'TUTOR';
 

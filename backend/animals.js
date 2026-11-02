@@ -7,6 +7,24 @@ const router = express.Router();
 const fs = require("node:fs/promises");
 const path = require("node:path");
 
+// O tutor só altera/remove animais vinculados a ele (T_ANIMAL_RESP)
+async function pertenceAoTutor(connection, animalId, tutorEmail) {
+  const perfilId = await buscarPerfilTutor(connection, tutorEmail);
+  if (!perfilId) return false;
+
+  const vinculo = await connection.execute(
+    `SELECT COUNT(*) FROM T_ANIMAL_RESP
+      WHERE T_ANIMAL_ID = :animalId AND T_USER_PROFILE_ID = :perfilId`,
+    { animalId, perfilId },
+  );
+  return vinculo.rows[0][0] > 0;
+}
+
+function lerAnimalId(req) {
+  const animalId = Number(req.params.id);
+  return Number.isInteger(animalId) && animalId > 0 ? animalId : null;
+}
+
 router.get("/", async (req, res) => {
   let connection;
 
@@ -227,6 +245,162 @@ router.post("/", async (req, res) => {
   }
 });
 
+// Dados do animal para a tela de edição (com IDs de espécie e raça, que o
+// JSON de PKG_ANIMAL.FN_ANIMAL_TO_JSON não traz)
+router.get("/:id", async (req, res) => {
+  let connection;
+
+  try {
+    const animalId = lerAnimalId(req);
+    const { tutorEmail } = req.query;
+
+    if (!animalId || !tutorEmail) {
+      return res.status(400).json({
+        sucesso: false,
+        mensagem: "ID do animal e e-mail do tutor são obrigatórios.",
+      });
+    }
+
+    connection = await conectarOracle();
+
+    if (!(await pertenceAoTutor(connection, animalId, tutorEmail))) {
+      return res.status(404).json({
+        sucesso: false,
+        mensagem: "Animal não encontrado para este tutor.",
+      });
+    }
+
+    const resultado = await connection.execute(
+      `SELECT ID, NAME, NICKNAME, GENDER, TO_CHAR(BIRTH_DATE, 'YYYY-MM-DD'),
+              RGA, MICROCHIP_CODE, IS_NEUTERED, WEIGHT, HEIGHT, COLOR,
+              T_SPECIES_ID, T_BREED_ID
+         FROM T_ANIMAL WHERE ID = :animalId`,
+      { animalId },
+    );
+
+    const [id, nome, apelido, genero, dataNascimento, rga, microchip, castrado,
+      peso, altura, cor, especieId, racaId] = resultado.rows[0];
+
+    res.json({
+      sucesso: true,
+      animal: {
+        id, nome, apelido, genero, dataNascimento, rga, microchip,
+        castrado: castrado === "S", peso, altura, cor, especieId, racaId,
+      },
+    });
+  } catch (error) {
+    console.error("Erro ao buscar animal:", error);
+
+    res.status(500).json({
+      sucesso: false,
+      mensagem: "Erro ao buscar animal no Oracle.",
+    });
+  } finally {
+    if (connection) {
+      await connection.close();
+    }
+  }
+});
+
+router.put("/:id", async (req, res) => {
+  let connection;
+
+  try {
+    const animalId = lerAnimalId(req);
+    const {
+      nome, apelido, genero, dataNascimento, rga, microchip, castrado,
+      peso, altura, cor, especieId, racaId, tutorEmail,
+    } = req.body;
+
+    if (!animalId || !tutorEmail) {
+      return res.status(400).json({
+        sucesso: false,
+        mensagem: "ID do animal e e-mail do tutor são obrigatórios.",
+      });
+    }
+
+    if (!nome || !genero || !especieId || !racaId) {
+      return res.status(400).json({
+        sucesso: false,
+        mensagem: "Nome, gênero, espécie e raça são obrigatórios.",
+      });
+    }
+
+    if (!["M", "F"].includes(genero)) {
+      return res.status(400).json({
+        sucesso: false,
+        mensagem: "Gênero deve ser M ou F.",
+      });
+    }
+
+    connection = await conectarOracle();
+
+    if (!(await pertenceAoTutor(connection, animalId, tutorEmail))) {
+      return res.status(404).json({
+        sucesso: false,
+        mensagem: "Animal não encontrado para este tutor.",
+      });
+    }
+
+    const racaDaEspecie = await connection.execute(
+      `SELECT COUNT(*) FROM T_BREED WHERE ID = :racaId AND T_SPECIES_ID = :especieId`,
+      { racaId, especieId },
+    );
+
+    if (racaDaEspecie.rows[0][0] === 0) {
+      return res.status(400).json({
+        sucesso: false,
+        mensagem: "A raça informada não pertence à espécie selecionada.",
+      });
+    }
+
+    await connection.execute(
+      `UPDATE T_ANIMAL SET
+          NAME = :nome, NICKNAME = :apelido, GENDER = :genero,
+          BIRTH_DATE = TO_DATE(:dataNascimento, 'YYYY-MM-DD'),
+          RGA = :rga, MICROCHIP_CODE = :microchip, IS_NEUTERED = :castrado,
+          WEIGHT = :peso, HEIGHT = :altura, COLOR = :cor,
+          T_SPECIES_ID = :especieId, T_BREED_ID = :racaId,
+          UPDATED_AT = SYSTIMESTAMP
+        WHERE ID = :animalId`,
+      {
+        nome,
+        apelido: apelido || null,
+        genero,
+        dataNascimento: dataNascimento || null,
+        rga: rga || null,
+        microchip: microchip || null,
+        castrado: castrado ? "S" : "N",
+        peso: peso ?? null,
+        altura: altura ?? null,
+        cor: cor || null,
+        especieId,
+        racaId,
+        animalId,
+      },
+    );
+
+    await connection.commit();
+
+    res.json({
+      sucesso: true,
+      mensagem: "Animal atualizado no Oracle!",
+      id: animalId,
+    });
+  } catch (error) {
+    console.error("Erro ao atualizar animal:", error);
+
+    res.status(500).json({
+      sucesso: false,
+      mensagem: "Erro ao atualizar animal no Oracle.",
+    });
+  } finally {
+    if (connection) {
+      await connection.close();
+    }
+  }
+});
+
 router.delete("/:id", async (req, res) => {
   let connection;
 
@@ -243,17 +417,7 @@ router.delete("/:id", async (req, res) => {
 
     connection = await conectarOracle();
 
-    const perfilId = await buscarPerfilTutor(connection, tutorEmail);
-
-    const vinculo = perfilId
-      ? await connection.execute(
-          `SELECT COUNT(*) FROM T_ANIMAL_RESP
-            WHERE T_ANIMAL_ID = :animalId AND T_USER_PROFILE_ID = :perfilId`,
-          { animalId, perfilId },
-        )
-      : { rows: [[0]] };
-
-    if (vinculo.rows[0][0] === 0) {
+    if (!(await pertenceAoTutor(connection, animalId, tutorEmail))) {
       return res.status(404).json({
         sucesso: false,
         mensagem: "Animal não encontrado para este tutor.",

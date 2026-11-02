@@ -47,6 +47,7 @@ export const pt = {
   'auth.registerError': 'Erro ao cadastrar',
 
   // Home e agendamentos
+  'articles.loadError': 'Não foi possível carregar os artigos',
   'appointments.title': 'Agendamentos',
   'appointments.loadError': 'Não foi possível carregar seus agendamentos',
   'appointments.empty': 'Quando você possuir algum agendamento, ele deverá aparecer aqui',
@@ -109,6 +110,7 @@ export const pt = {
   'petForm.missing': 'Preencha todos os campos',
   'petForm.invalidNumbers': 'Idade e peso precisam ser números válidos',
   'petForm.saveError': 'Não foi possível salvar o pet',
+  'petForm.loadError': 'Não foi possível carregar o pet',
   'petForm.create': 'Cadastrar pet',
 
   // Cadastro de pet no Oracle (admin)
@@ -270,6 +272,7 @@ export const en: Record<TranslationKey, string> = {
   'auth.passwordTooShort': 'The password must have at least 6 characters',
   'auth.registerError': 'Could not sign up',
 
+  'articles.loadError': "Couldn't load the articles",
   'appointments.title': 'Appointments',
   'appointments.loadError': "Couldn't load your appointments",
   'appointments.empty': 'Your appointments will show up here',
@@ -329,6 +332,7 @@ export const en: Record<TranslationKey, string> = {
   'petForm.missing': 'Fill in all fields',
   'petForm.invalidNumbers': 'Age and weight must be valid numbers',
   'petForm.saveError': "Couldn't save the pet",
+  'petForm.loadError': "Couldn't load the pet",
   'petForm.create': 'Add pet',
 
   'oraclePet.name': 'NAME *',

@@ -1,6 +1,7 @@
 require("dotenv").config();
 
 const animalsRoutes = require("./animals");
+const artigosRoutes = require("./artigos");
 const especiesRoutes = require("./especies");
 const usuariosRoutes = require("./usuarios");
 
@@ -12,6 +13,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use("/api/animals", animalsRoutes);
+app.use("/api/artigos", artigosRoutes);
 app.use("/api/especies", especiesRoutes);
 app.use("/api/usuarios", usuariosRoutes);
 

@@ -34,7 +34,7 @@ Este repositório contém o **aplicativo mobile do tutor**, construído em React
 ## Funcionalidades
 
 - **Autenticação** com e-mail e senha (Firebase Authentication), sessão persistida e logout.
-- **Meus Pets** — cadastrar, editar, listar e remover pets (CRUD completo, API Java).
+- **Meus Pets** — cadastrar, editar, listar e remover pets (CRUD completo, API Java). O botão de remover fica na tela de edição do pet, com confirmação.
 - **Agendamentos** — criar, reagendar, consultar e cancelar consultas veterinárias em clínicas aprovadas (CRUD completo, API Java).
 - **Lembretes de consulta** (notificações locais, sem servidor de push):
   - o lembrete é agendado ao criar ou reagendar uma consulta e dispara **4 horas antes** dela, com a mensagem *"Sua consulta das 14:30 começa em 4 horas"*;
@@ -46,7 +46,7 @@ Este repositório contém o **aplicativo mobile do tutor**, construído em React
 - **Sobre o app** (em *Conta*) — versão, **hash do commit** da build (com link para o GitHub), ambiente, situação das duas APIs e das notificações, e a equipe.
 - **Puxar para atualizar** em todas as telas que carregam dados da internet, e tela de erro com botão **"Tentar novamente"**.
 - **Mensagens de erro amigáveis** — falhas de rede, servidor iniciando, sessão expirada e erros de login aparecem em português claro, em vez de mensagens técnicas.
-- **Artigos** informativos sobre cuidados com animais.
+- **Artigos** informativos sobre cuidados com animais, guardados no Oracle (`T_ARTICLE` e `T_ARTICLE_TAG`) e servidos pelo backend Node em `/api/artigos`.
 - **Configurações da conta** (*Conta*):
   - **Tema** claro/escuro, com ícone de sol ou lua conforme o tema atual;
   - **Notificações** ativadas/desativadas;
@@ -120,15 +120,27 @@ npm install
 npm start
 ```
 
-Crie um arquivo `backend/.env` (não versionado) com `DB_USER`, `DB_PASSWORD`, `DB_HOST`, `DB_PORT` e `DB_SID` do Oracle. Rotas principais:
+Crie um arquivo `backend/.env` (não versionado) com `DB_USER`, `DB_PASSWORD`, `DB_HOST`, `DB_PORT` e `DB_SID` do Oracle.
+
+Os artigos da Home ficam no Oracle. Para criar as tabelas e carregar os artigos iniciais (pode rodar de novo sem duplicar nada):
+
+```bash
+cd backend
+node scripts/criar-artigos.js
+```
+
+Rotas principais:
 
 | Método | Rota | O que faz |
 |---|---|---|
 | GET | `/api/animals` | Lista todos os animais via `PKG_ANIMAL.PR_LISTAR_ANIMAIS_JSON` (`?tutorEmail=` filtra pelo tutor) |
 | POST | `/api/animals` | Cadastra um animal e o vincula ao tutor (`T_ANIMAL_RESP`) |
+| GET | `/api/animals/:id?tutorEmail=` | Dados de um animal do próprio tutor, para a tela de edição |
+| PUT | `/api/animals/:id` | Atualiza um animal do próprio tutor |
 | DELETE | `/api/animals/:id?tutorEmail=` | Remove um animal do próprio tutor |
 | GET | `/api/especies` e `/api/especies/:id/racas` | Espécies e raças para o formulário |
 | GET | `/api/usuarios/perfil?email=` | Perfil do usuário: `ADMIN` ou `TUTOR` |
+| GET | `/api/artigos` e `/api/artigos/:id` | Artigos da Home, com as tags |
 | GET | `/api/teste` | Verifica a conexão com o Oracle |
 
 ## Área de administrador
@@ -137,6 +149,7 @@ Usuários com perfil **ADMIN** no Oracle (`T_USER_PROFILE.PROFILE_TYPE = 'ADMIN'
 
 - o botão **"Ver Todos os Pets"**, que lista todos os animais registrados no Oracle (via procedure);
 - o cadastro de pets direto no Oracle (na visão *Todos os Pets*), com espécie e raça vindas do banco;
+- a edição e a remoção dos pets que ele mesmo cadastrou no Oracle (botão *Editar* no card; *Remover pet* fica na tela de edição);
 - o botão azul de **download** no topo, que gera o arquivo `03_animais.json` com todos os animais. Esse arquivo é o mesmo importado no MongoDB:
 
 ```bash
@@ -180,7 +193,7 @@ src/
 ├── components/    # Componentes de UI reutilizáveis (inclui a tela de erro com "Tentar novamente")
 ├── config/        # Configuração do Firebase e das URLs das APIs
 ├── context/       # Contextos globais (autenticação, agendamentos)
-├── data/          # Conteúdo estático local (artigos, configurações)
+├── data/          # Configurações locais da tela Conta (os artigos agora vêm da API)
 ├── hooks/         # Hooks de dados com TanStack Query, puxar para atualizar e navegação pelo lembrete
 ├── i18n/          # Idiomas (pt-BR e inglês): dicionário de textos e provider
 ├── screens/       # Telas do app
@@ -189,6 +202,9 @@ src/
 └── types/         # Tipos TypeScript
 
 backend/           # API Node/Express ligada ao Oracle
+├── sql/           # DDL das tabelas criadas pelo backend (artigos)
+├── scripts/       # criar-artigos.js: cria as tabelas e carrega data/artigos.json
+└── data/          # Artigos iniciais (antes ficavam no app)
 app.config.js      # Injeta o hash do commit na build (tela "Sobre o app")
 ```
 

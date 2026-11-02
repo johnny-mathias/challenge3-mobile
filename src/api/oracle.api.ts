@@ -3,8 +3,10 @@ import axios from 'axios';
 import { ORACLE_API_URL } from '../config/env';
 import { toFriendlyError } from './errors';
 
+import type { Article } from '../types/article';
 import type {
   OracleAnimal,
+  OracleAnimalDetails,
   OracleAnimalInput,
   OracleBreed,
   OracleSpecies,
@@ -41,6 +43,23 @@ export async function getOracleAnimalsByTutor(tutorEmail: string): Promise<Oracl
     params: { tutorEmail },
   });
   return data.animais;
+}
+
+export async function getOracleAnimal(id: number, tutorEmail: string): Promise<OracleAnimalDetails> {
+  const { data } = await oracleClient.get<{ animal: OracleAnimalDetails }>(`/animals/${id}`, {
+    params: { tutorEmail },
+  });
+  return data.animal;
+}
+
+export async function updateOracleAnimal(id: number, input: OracleAnimalInput): Promise<void> {
+  await oracleClient.put(`/animals/${id}`, input);
+}
+
+// Artigos da Home (T_ARTICLE), antes fixos em src/data/articles.json
+export async function getArticles(): Promise<Article[]> {
+  const { data } = await oracleClient.get<{ artigos: Article[] }>('/artigos');
+  return data.artigos;
 }
 
 export async function deleteOracleAnimal(id: number, tutorEmail: string): Promise<void> {
