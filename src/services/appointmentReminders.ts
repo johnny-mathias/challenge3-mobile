@@ -1,6 +1,9 @@
 import { Platform } from 'react-native';
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 import * as Notifications from './notifications';
+import { getLanguage, t } from '../i18n';
 
 import type { AppointmentDTO } from '../types/api.types';
 
@@ -12,7 +15,23 @@ const SOON_DELAY_MS = 5 * 1000;
 const CHANNEL_ID = 'consultas';
 const IDENTIFIER_PREFIX = 'consulta-';
 
+const PREFERENCE_KEY = 'superbicho:reminders';
+
 const isSupported = Platform.OS !== 'web';
+
+// Preferência do tutor (Conta → Notificações); ligada por padrão
+let remindersOn = true;
+
+export async function loadRemindersPreference() {
+  const saved = await AsyncStorage.getItem(PREFERENCE_KEY).catch(() => null);
+  remindersOn = saved !== 'off';
+  return remindersOn;
+}
+
+export async function saveRemindersPreference(on: boolean) {
+  remindersOn = on;
+  await AsyncStorage.setItem(PREFERENCE_KEY, on ? 'on' : 'off').catch(() => {});
+}
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -73,8 +92,8 @@ export function getAppointmentDate(appointment: Pick<AppointmentDTO, 'date' | 't
 }
 
 function reminderIdentifier(appointment: AppointmentDTO) {
-  // Data/hora no identificador: reagendar gera um lembrete novo
-  return `${IDENTIFIER_PREFIX}${appointment.id}-${appointment.date}-${appointment.time.slice(0, 5)}`;
+  // Data/hora e idioma no identificador: reagendar ou trocar o idioma gera um lembrete novo
+  return `${IDENTIFIER_PREFIX}${appointment.id}-${appointment.date}-${appointment.time.slice(0, 5)}-${getLanguage()}`;
 }
 
 // "4 horas", "45 minutos", "3h20min"
@@ -83,9 +102,9 @@ export function formatTimeUntil(ms: number) {
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
 
-  if (hours === 0) return `${minutes} ${minutes === 1 ? 'minuto' : 'minutos'}`;
-  if (minutes === 0) return `${hours} ${hours === 1 ? 'hora' : 'horas'}`;
-  return `${hours}h${String(minutes).padStart(2, '0')}min`;
+  if (hours === 0) return t(minutes === 1 ? 'duration.minute' : 'duration.minutes', { count: minutes });
+  if (minutes === 0) return t(hours === 1 ? 'duration.hour' : 'duration.hours', { count: hours });
+  return t('duration.hoursMinutes', { hours, minutes: String(minutes).padStart(2, '0') });
 }
 
 async function cancelReminders(predicate: (identifier: string) => boolean) {
@@ -115,7 +134,7 @@ export async function scheduleAppointmentReminder(
   appointment: AppointmentDTO,
   { notifyIfSoon }: { notifyIfSoon: boolean },
 ) {
-  if (!isSupported) return;
+  if (!isSupported || !remindersOn) return;
 
   const appointmentAt = getAppointmentDate(appointment).getTime();
   const now = Date.now();
@@ -132,8 +151,11 @@ export async function scheduleAppointmentReminder(
   await Notifications.scheduleNotificationAsync({
     identifier: reminderIdentifier(appointment),
     content: {
-      title: `Consulta de ${appointment.animalName}`,
-      body: `Sua consulta das ${appointment.time.slice(0, 5)} começa em ${formatTimeUntil(appointmentAt - fireAt)}`,
+      title: t('reminder.title', { pet: appointment.animalName }),
+      body: t('reminder.body', {
+        time: appointment.time.slice(0, 5),
+        remaining: formatTimeUntil(appointmentAt - fireAt),
+      }),
       data: { appointmentId: appointment.id },
     },
     trigger: {
@@ -148,6 +170,11 @@ export async function scheduleAppointmentReminder(
 // (inclusive pela clínica) e agenda os que faltam
 export async function syncAppointmentReminders(appointments: AppointmentDTO[]) {
   if (!isSupported) return;
+
+  if (!remindersOn) {
+    await cancelAllAppointmentReminders();
+    return;
+  }
 
   const expected = new Map(
     appointments.map((appointment) => [reminderIdentifier(appointment), appointment]),

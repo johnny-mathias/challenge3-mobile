@@ -13,6 +13,7 @@ import { useNavigation } from '@react-navigation/native';
 
 import { getErrorMessage } from '../api/errors';
 import { useAuth } from '../context/AuthProvider';
+import { useTranslation } from '../i18n';
 import { useTheme } from '../theme/ThemeProvider';
 import { themes } from '../theme/theme';
 
@@ -20,6 +21,7 @@ export default function LoginScreen() {
   const theme = useTheme();
   const styles = createStyles(theme);
   const navigation = useNavigation<any>();
+  const { t } = useTranslation();
 
   const { login, sessionExpired, user } = useAuth();
 
@@ -29,7 +31,7 @@ export default function LoginScreen() {
 
   async function handleLogin() {
     if (!email.trim() || !password.trim()) {
-      Alert.alert('Atenção', 'Informe e-mail e senha');
+      Alert.alert(t('common.attention'), t('auth.loginMissing'));
       return;
     }
 
@@ -38,7 +40,7 @@ export default function LoginScreen() {
     try {
       await login(email.trim(), password);
     } catch (error: any) {
-      Alert.alert('Erro ao entrar', getErrorMessage(error));
+      Alert.alert(t('auth.loginError'), getErrorMessage(error));
     } finally {
       setIsSubmitting(false);
     }
@@ -49,16 +51,14 @@ export default function LoginScreen() {
       <View style={styles.card}>
         <Text style={styles.title}>SuperBicho</Text>
         <Text style={styles.subtitle}>
-          {sessionExpired
-            ? 'Sua sessão expirou. Entre novamente.'
-            : 'Entrar na sua conta'}
+          {sessionExpired ? t('auth.sessionExpired') : t('auth.loginSubtitle')}
         </Text>
 
         <View style={styles.form}>
-          <Text style={styles.label}>E-mail</Text>
+          <Text style={styles.label}>{t('auth.email')}</Text>
           <TextInput
             style={styles.input}
-            placeholder="Digite seu e-mail"
+            placeholder={t('auth.emailPlaceholder')}
             placeholderTextColor={theme.colors.textPlaceholder}
             autoCapitalize="none"
             keyboardType="email-address"
@@ -66,10 +66,10 @@ export default function LoginScreen() {
             onChangeText={setEmail}
           />
 
-          <Text style={styles.label}>Senha</Text>
+          <Text style={styles.label}>{t('auth.password')}</Text>
           <TextInput
             style={styles.input}
-            placeholder="Digite sua senha"
+            placeholder={t('auth.passwordPlaceholder')}
             placeholderTextColor={theme.colors.textPlaceholder}
             secureTextEntry
             value={password}
@@ -85,7 +85,7 @@ export default function LoginScreen() {
           {isSubmitting ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={styles.buttonText}>Entrar</Text>
+            <Text style={styles.buttonText}>{t('auth.login')}</Text>
           )}
         </TouchableOpacity>
 
@@ -93,7 +93,7 @@ export default function LoginScreen() {
           style={styles.linkButton}
           onPress={() => navigation.navigate('Cadastro')}
         >
-          <Text style={styles.linkText}>Não tem conta? Cadastre-se</Text>
+          <Text style={styles.linkText}>{t('auth.goToRegister')}</Text>
         </TouchableOpacity>
       </View>
     </View>

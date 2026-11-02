@@ -12,7 +12,6 @@ import {
   getSpecies,
   getUserRole,
 } from '../api/oracle.api';
-import { areRemindersEnabled } from '../services/appointmentReminders';
 
 export function useMyAnimals() {
   const { guardian } = useAuth();
@@ -81,8 +80,4 @@ export function useServiceStatus() {
     javaApi: useQuery({ queryKey: ['health', 'java'], queryFn: checkJavaApi, ...options }),
     oracleApi: useQuery({ queryKey: ['health', 'oracle'], queryFn: checkOracleApi, ...options }),
   };
-}
-
-export function useRemindersEnabled() {
-  return useQuery({ queryKey: ['reminders', 'permission'], queryFn: areRemindersEnabled });
 }

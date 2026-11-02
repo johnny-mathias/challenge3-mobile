@@ -7,12 +7,14 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import PetsScreen from "../screens/PetsScreen";
 import ExportAnimalsButton from "./ExportAnimalsButton";
 
+import { useTranslation } from "../i18n";
 import { useTheme } from "../theme/ThemeProvider";
 
 const Tab = createBottomTabNavigator();
 
 export default function MainTabs() {
   const { colors } = useTheme();
+  const { t } = useTranslation();
 
   return (
     <Tab.Navigator
@@ -51,7 +53,7 @@ export default function MainTabs() {
         name="HomeScreen"
         component={HomeScreen}
         options={{
-          title: "Home",
+          title: t("nav.home"),
           headerTitleStyle: {
             color: colors.text,
           },
@@ -66,7 +68,7 @@ export default function MainTabs() {
         name="ServicesScreen"
         component={ServicesScreen}
         options={{
-          title: "Serviços",
+          title: t("nav.services"),
           headerTitleStyle: {
             color: colors.text,
           },
@@ -81,7 +83,7 @@ export default function MainTabs() {
         name="PetsScreen"
         component={PetsScreen}
         options={{
-          title: "Pets",
+          title: t("nav.pets"),
           headerTitleStyle: {
             color: colors.text,
           },
@@ -97,7 +99,7 @@ export default function MainTabs() {
         name="AccountScreen"
         component={AccountScreen}
         options={{
-          title: "Conta",
+          title: t("nav.account"),
           headerTitleStyle: {
             color: colors.text,
           },

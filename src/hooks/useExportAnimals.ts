@@ -1,6 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
 
 import { getAllOracleAnimals } from '../api/oracle.api';
+import { t } from '../i18n';
 import { exportAnimalsJson } from '../services/animalExport';
 
 export function useExportAnimals() {
@@ -8,7 +9,7 @@ export function useExportAnimals() {
     mutationFn: async () => {
       const animals = await getAllOracleAnimals();
       if (animals.length === 0) {
-        throw new Error('Nenhum animal encontrado no Oracle para exportar');
+        throw new Error(t('export.empty'));
       }
       await exportAnimalsJson(animals);
       return animals.length;

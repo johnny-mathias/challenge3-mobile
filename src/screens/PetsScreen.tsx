@@ -24,8 +24,10 @@ import { useAnimalMutations } from '../hooks/useAnimalMutations';
 import { useOracleAnimalMutations } from '../hooks/useOracleAnimalMutations';
 import { useRefreshControl } from '../hooks/useRefreshControl';
 import { useTheme } from '../theme/ThemeProvider';
+import { useTranslation } from '../i18n';
 import { themes } from '../theme/theme';
 
+import type { TranslationKey } from '../i18n/translations';
 import type { AnimalDTO, OracleAnimal } from '../types/api.types';
 
 // "Meus Pets" vem da API Java (todos os usuários); "Todos os Pets" vem do backend
@@ -36,9 +38,9 @@ type PetItem =
 
 type PetsView = 'mine' | 'all';
 
-const VIEW_TITLES: Record<PetsView, string> = {
-  mine: 'Meus Pets',
-  all: 'Todos os Pets',
+const VIEW_TITLES: Record<PetsView, TranslationKey> = {
+  mine: 'pets.mine',
+  all: 'pets.all',
 };
 
 function describeOracleAnimal(animal: OracleAnimal) {
@@ -49,6 +51,7 @@ function describeOracleAnimal(animal: OracleAnimal) {
 
 export default function PetsScreen() {
   const theme = useTheme();
+  const { t } = useTranslation();
   const styles = createStyles(theme);
   const navigation = useNavigation<any>();
 
@@ -93,7 +96,7 @@ export default function PetsScreen() {
   const viewToggle = isAdmin ? (
     <TouchableOpacity style={styles.viewToggle} onPress={toggleView}>
       <Text style={styles.viewToggleText}>
-        {view === 'mine' ? `Ver ${VIEW_TITLES.all}` : `Ver ${VIEW_TITLES.mine}`}
+        {t('pets.see', { view: t(VIEW_TITLES[view === 'mine' ? 'all' : 'mine']) })}
       </Text>
     </TouchableOpacity>
   ) : null;
@@ -102,14 +105,14 @@ export default function PetsScreen() {
   const createScreen = view === 'all' ? 'AnimalCreateScreen' : 'AnimalFormScreen';
 
   function confirmDelete(name: string, onConfirm: () => Promise<unknown>) {
-    Alert.alert('Remover pet', `Remover ${name}?`, [
-      { text: 'Cancelar', style: 'cancel' },
+    Alert.alert(t('pets.removeTitle'), t('pets.removeConfirm', { name }), [
+      { text: t('common.cancel'), style: 'cancel' },
       {
-        text: 'Remover',
+        text: t('common.remove'),
         style: 'destructive',
         onPress: () =>
           onConfirm().catch((error: Error) =>
-            Alert.alert('Não foi possível remover o pet', error.message),
+            Alert.alert(t('pets.removeError'), error.message),
           ),
       },
     ]);
@@ -136,8 +139,8 @@ export default function PetsScreen() {
       <ErrorState
         title={
           view === 'mine'
-            ? 'Não foi possível carregar seus pets'
-            : 'Não foi possível carregar os pets da SuperBicho'
+            ? t('pets.loadMineError')
+            : t('pets.loadAllError')
         }
         error={activeQuery.error}
         onRetry={activeQuery.refetch}
@@ -155,13 +158,13 @@ export default function PetsScreen() {
         refreshControl={refreshControl}
         keyExtractor={(item) => `${item.source}-${item.animal.id}`}
         ListHeaderComponent={
-          <Text style={styles.viewTitle}>{VIEW_TITLES[view]}</Text>
+          <Text style={styles.viewTitle}>{t(VIEW_TITLES[view])}</Text>
         }
         ListEmptyComponent={
           <Text style={styles.emptyText}>
             {view === 'mine'
-              ? 'Você ainda não cadastrou nenhum pet'
-              : 'Nenhum pet registrado na SuperBicho'}
+              ? t('pets.emptyMine')
+              : t('pets.emptyAll')}
           </Text>
         }
         ListFooterComponent={viewToggle}
@@ -179,7 +182,7 @@ export default function PetsScreen() {
               <View>
                 <Text style={styles.name}>{item.animal.name}</Text>
                 <Text style={styles.details}>
-                  {item.animal.species} · {item.animal.age} anos · {item.animal.weight}kg
+                  {item.animal.species} · {t('pets.years', { count: item.animal.age })} · {item.animal.weight}kg
                 </Text>
               </View>
             )}
@@ -191,7 +194,7 @@ export default function PetsScreen() {
                     style={styles.editButton}
                     onPress={() => navigation.navigate('AnimalFormScreen', { animal: item.animal })}
                   >
-                    <Text style={styles.actionText}>Editar</Text>
+                    <Text style={styles.actionText}>{t('common.edit')}</Text>
                   </TouchableOpacity>
                 )}
 
@@ -199,7 +202,7 @@ export default function PetsScreen() {
                   style={styles.deleteButton}
                   onPress={() => handleDelete(item)}
                 >
-                  <Text style={styles.actionText}>Remover</Text>
+                  <Text style={styles.actionText}>{t('common.remove')}</Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -211,7 +214,7 @@ export default function PetsScreen() {
         style={styles.fab}
         onPress={() => navigation.navigate(createScreen)}
       >
-        <Text style={styles.fabText}>Cadastrar</Text>
+        <Text style={styles.fabText}>{t('pets.register')}</Text>
       </TouchableOpacity>
     </View>
   );

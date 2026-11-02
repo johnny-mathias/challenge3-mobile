@@ -18,12 +18,14 @@ import ErrorState from "../components/ErrorState";
 import { useAppointments } from "../context/AppointmentsProvider";
 import { useRefreshControl } from "../hooks/useRefreshControl";
 import { useTheme } from "../theme/ThemeProvider";
+import { getLocale, useTranslation } from "../i18n";
 import { useApprovedClinics, useMyAnimals } from "../hooks/queries";
 
 import type { AppointmentDTO } from "../types/api.types";
 
 export default function AppointmentFormScreen() {
   const theme = useTheme();
+  const { t, language } = useTranslation();
 
   const route = useRoute<any>();
   const navigation = useNavigation<any>();
@@ -44,11 +46,11 @@ export default function AppointmentFormScreen() {
   useEffect(() => {
     if (animalsQuery.isSuccess && animals.length === 0) {
       Alert.alert(
-        "Nenhum pet cadastrado",
-        "Você precisa cadastrar um pet antes de criar um agendamento.",
+        t("appointmentForm.noPetsTitle"),
+        t("appointmentForm.noPetsMessage"),
         [
-          { text: "Cancelar", style: "cancel", onPress: () => navigation.goBack() },
-          { text: "Cadastrar Pet", onPress: () => navigation.navigate("AnimalFormScreen") },
+          { text: t("common.cancel"), style: "cancel", onPress: () => navigation.goBack() },
+          { text: t("appointmentForm.registerPet"), onPress: () => navigation.navigate("AnimalFormScreen") },
         ],
       );
     }
@@ -80,40 +82,40 @@ export default function AppointmentFormScreen() {
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      title: appointment == null ? "Novo Agendamento" : "Reagendar",
+      title: appointment == null ? t("nav.newAppointment") : t("nav.reschedule"),
     });
-  }, []);
+  }, [language]);
 
   function getAnimalLabel() {
     return (
       animalOptions.find((opt) => opt.value === animalId)?.label ||
-      "Selecione um pet"
+      t("appointmentForm.selectPet")
     );
   }
 
   function getClinicLabel() {
     return (
       clinicOptions.find((opt) => opt.value === clinicId)?.label ||
-      "Selecione uma clínica"
+      t("appointmentForm.selectClinic")
     );
   }
 
   function formatDate(value: Date) {
-    return value.toLocaleDateString("pt-BR");
+    return value.toLocaleDateString(getLocale());
   }
 
   function formatTime(value: Date) {
-    return value.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+    return value.toLocaleTimeString(getLocale(), { hour: "2-digit", minute: "2-digit" });
   }
 
   function handleSave() {
     if (!animalId) {
-      Alert.alert("Atenção", "Selecione um pet");
+      Alert.alert(t("common.attention"), t("appointmentForm.selectPet"));
       return;
     }
 
     if (!clinicId) {
-      Alert.alert("Atenção", "Selecione uma clínica");
+      Alert.alert(t("common.attention"), t("appointmentForm.selectClinic"));
       return;
     }
 
@@ -137,10 +139,10 @@ export default function AppointmentFormScreen() {
   }
 
   function handleDelete() {
-    Alert.alert("Cancelar agendamento", "Deseja realmente cancelar este agendamento?", [
-      { text: "Voltar", style: "cancel" },
+    Alert.alert(t("appointmentForm.cancelAppointment"), t("appointmentForm.cancelConfirm"), [
+      { text: t("common.back"), style: "cancel" },
       {
-        text: "Cancelar agendamento",
+        text: t("appointmentForm.cancelAppointment"),
         style: "destructive",
         onPress: () => {
           cancelAppointment(appointment!.id);
@@ -157,8 +159,8 @@ export default function AppointmentFormScreen() {
       <ErrorState
         title={
           animalsQuery.isError
-            ? "Não foi possível carregar seus pets"
-            : "Não foi possível carregar as clínicas"
+            ? t("appointmentForm.petsLoadError")
+            : t("appointmentForm.clinicsLoadError")
         }
         error={animalsQuery.error ?? clinicsQuery.error}
         onRetry={refetchAll}
@@ -169,7 +171,7 @@ export default function AppointmentFormScreen() {
   return (
     <>
       <ScrollView style={styles.container} refreshControl={refreshControl}>
-        <Text style={styles.sectionTitle}>PET</Text>
+        <Text style={styles.sectionTitle}>{t("appointmentForm.pet")}</Text>
         <TouchableOpacity
           style={styles.dropdownButton}
           onPress={() => setOpenDropdown("animal")}
@@ -178,7 +180,7 @@ export default function AppointmentFormScreen() {
           <Text style={styles.dropdownArrow}>▼</Text>
         </TouchableOpacity>
 
-        <Text style={styles.sectionTitle}>CLÍNICA</Text>
+        <Text style={styles.sectionTitle}>{t("appointmentForm.clinic")}</Text>
         <TouchableOpacity
           style={styles.dropdownButton}
           onPress={() => setOpenDropdown("clinic")}
@@ -187,25 +189,25 @@ export default function AppointmentFormScreen() {
           <Text style={styles.dropdownArrow}>▼</Text>
         </TouchableOpacity>
 
-        <Text style={styles.sectionTitle}>DATA</Text>
+        <Text style={styles.sectionTitle}>{t("appointmentForm.date")}</Text>
         <TouchableOpacity style={styles.dateButton} onPress={() => setShowDatePicker(true)}>
           <Text style={styles.dateButtonText}>{formatDate(date)}</Text>
         </TouchableOpacity>
 
-        <Text style={styles.sectionTitle}>HORÁRIO</Text>
+        <Text style={styles.sectionTitle}>{t("appointmentForm.time")}</Text>
         <TouchableOpacity style={styles.dateButton} onPress={() => setShowTimePicker(true)}>
           <Text style={styles.dateButtonText}>{formatTime(date)}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.button} onPress={handleSave}>
           <Text style={styles.buttonText}>
-            {appointment ? "Salvar alterações" : "Criar agendamento"}
+            {appointment ? t("common.saveChanges") : t("appointmentForm.create")}
           </Text>
         </TouchableOpacity>
 
         {appointment && (
           <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
-            <Text style={styles.buttonText}>Cancelar agendamento</Text>
+            <Text style={styles.buttonText}>{t("appointmentForm.cancelAppointment")}</Text>
           </TouchableOpacity>
         )}
       </ScrollView>

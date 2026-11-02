@@ -13,12 +13,14 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { useAuth } from '../context/AuthProvider';
 import { useAnimalMutations } from '../hooks/useAnimalMutations';
 import { useTheme } from '../theme/ThemeProvider';
+import { useTranslation } from '../i18n';
 import { themes } from '../theme/theme';
 
 import type { AnimalDTO } from '../types/api.types';
 
 export default function AnimalFormScreen() {
   const theme = useTheme();
+  const { t, language } = useTranslation();
   const styles = createStyles(theme);
 
   const navigation = useNavigation<any>();
@@ -35,12 +37,12 @@ export default function AnimalFormScreen() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useLayoutEffect(() => {
-    navigation.setOptions({ title: animal ? 'Editar Pet' : 'Novo Pet' });
-  }, []);
+    navigation.setOptions({ title: animal ? t('nav.editPet') : t('nav.newPet') });
+  }, [language]);
 
   async function handleSave() {
     if (!name.trim() || !species.trim() || !age.trim() || !weight.trim()) {
-      Alert.alert('Atenção', 'Preencha todos os campos');
+      Alert.alert(t('common.attention'), t('petForm.missing'));
       return;
     }
 
@@ -53,7 +55,7 @@ export default function AnimalFormScreen() {
     };
 
     if (Number.isNaN(input.age) || Number.isNaN(input.weight)) {
-      Alert.alert('Atenção', 'Idade e peso precisam ser números válidos');
+      Alert.alert(t('common.attention'), t('petForm.invalidNumbers'));
       return;
     }
 
@@ -67,7 +69,7 @@ export default function AnimalFormScreen() {
       }
       navigation.goBack();
     } catch (error: any) {
-      Alert.alert('Erro', error?.message ?? 'Não foi possível salvar o pet');
+      Alert.alert(t('petForm.saveError'), error?.message ?? t('error.generic'));
     } finally {
       setIsSubmitting(false);
     }
@@ -75,25 +77,25 @@ export default function AnimalFormScreen() {
 
   return (
     <ScrollView style={styles.container}>
-      <Text style={styles.label}>Nome</Text>
+      <Text style={styles.label}>{t('petForm.name')}</Text>
       <TextInput
         style={styles.input}
         value={name}
         onChangeText={setName}
-        placeholder="Nome do pet"
+        placeholder={t('petForm.namePlaceholder')}
         placeholderTextColor={theme.colors.textPlaceholder}
       />
 
-      <Text style={styles.label}>Espécie</Text>
+      <Text style={styles.label}>{t('petForm.species')}</Text>
       <TextInput
         style={styles.input}
         value={species}
         onChangeText={setSpecies}
-        placeholder="Ex: Cachorro, Gato"
+        placeholder={t('petForm.speciesPlaceholder')}
         placeholderTextColor={theme.colors.textPlaceholder}
       />
 
-      <Text style={styles.label}>Idade (anos)</Text>
+      <Text style={styles.label}>{t('petForm.age')}</Text>
       <TextInput
         style={styles.input}
         value={age}
@@ -103,7 +105,7 @@ export default function AnimalFormScreen() {
         placeholderTextColor={theme.colors.textPlaceholder}
       />
 
-      <Text style={styles.label}>Peso (kg)</Text>
+      <Text style={styles.label}>{t('petForm.weight')}</Text>
       <TextInput
         style={styles.input}
         value={weight}
@@ -115,7 +117,7 @@ export default function AnimalFormScreen() {
 
       <TouchableOpacity style={styles.button} onPress={handleSave} disabled={isSubmitting}>
         <Text style={styles.buttonText}>
-          {isSubmitting ? 'Salvando...' : animal ? 'Salvar alterações' : 'Cadastrar pet'}
+          {isSubmitting ? t('common.saving') : animal ? t('common.saveChanges') : t('petForm.create')}
         </Text>
       </TouchableOpacity>
     </ScrollView>

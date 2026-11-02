@@ -1,5 +1,5 @@
-import { createContext, useContext, useEffect } from 'react';
-import { Alert } from 'react-native';
+import { createContext, useContext, useEffect, useState } from 'react';
+import { Alert, AppState, Linking } from 'react-native';
 
 import {
   useMutation,
@@ -15,8 +15,15 @@ import {
   getMyAppointments,
   updateAppointment as updateAppointmentRequest,
 } from '../api/appointments.api';
+import { useTranslation } from '../i18n';
+import type { TranslationKey } from '../i18n/translations';
 import {
+  areRemindersEnabled,
+  cancelAllAppointmentReminders,
   cancelAppointmentReminder,
+  loadRemindersPreference,
+  requestRemindersPermission,
+  saveRemindersPreference,
   scheduleAppointmentReminder,
   setupAppointmentReminders,
   syncAppointmentReminders,
@@ -41,6 +48,10 @@ interface AppointmentsContextData {
   updateAppointment: (id: number, data: AppointmentInput) => void;
 
   cancelAppointment: (id: number) => void;
+
+  // Conta → Notificações: preferência do tutor + permissão do Android
+  remindersEnabled: boolean;
+  setRemindersEnabled: (on: boolean) => Promise<void>;
 }
 
 const AppointmentsContext =
@@ -51,6 +62,11 @@ const AppointmentsContext =
 export function AppointmentsProvider({ children }: any) {
   const queryClient = useQueryClient();
   const { guardian } = useAuth();
+  const { t, language } = useTranslation();
+
+  const [remindersOn, setRemindersOn] = useState(true);
+  const [permissionGranted, setPermissionGranted] = useState(false);
+  const remindersEnabled = remindersOn && permissionGranted;
 
   const {
     data: allAppointments = [],
@@ -74,26 +90,61 @@ export function AppointmentsProvider({ children }: any) {
   }
 
   useEffect(() => {
-    setupAppointmentReminders().catch((error) =>
-      console.warn('Lembretes de consulta indisponíveis:', error),
-    );
+    // Só pede a permissão se o tutor não desligou os lembretes no app
+    loadRemindersPreference()
+      .then(async (on) => {
+        setRemindersOn(on);
+        setPermissionGranted(on ? await setupAppointmentReminders() : await areRemindersEnabled());
+      })
+      .catch((error) => console.warn('Lembretes de consulta indisponíveis:', error));
+
+    // Volta dos ajustes do Android: a permissão pode ter mudado
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') areRemindersEnabled().then(setPermissionGranted).catch(() => {});
+    });
+    return () => subscription.remove();
   }, []);
 
-  // Lembretes locais acompanham a lista da API (ver services/appointmentReminders)
+  // Lembretes locais acompanham a lista da API, a preferência e o idioma
+  // (ver services/appointmentReminders)
   useEffect(() => {
     if (!isLoading && !isError) {
       syncAppointmentReminders(appointments).catch(() => {});
     }
-  }, [allAppointments, isLoading, isError]);
+  }, [allAppointments, isLoading, isError, remindersEnabled, language]);
 
-  function alertError(title: string) {
-    return (error: Error) => Alert.alert(title, error.message);
+  async function setRemindersEnabled(on: boolean) {
+    await saveRemindersPreference(on);
+    setRemindersOn(on);
+
+    if (!on) {
+      await cancelAllAppointmentReminders();
+      return;
+    }
+
+    const permission = await requestRemindersPermission();
+    setPermissionGranted(permission === 'granted');
+
+    if (permission !== 'granted') {
+      Alert.alert(t('account.permissionTitle'), t('account.permissionMessage'), [
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('account.openSettings'), onPress: () => Linking.openSettings() },
+      ]);
+    }
+  }
+
+  function alertError(titleKey: TranslationKey) {
+    return (error: Error) => Alert.alert(t(titleKey), error.message);
   }
 
   function remind(appointment: AppointmentDTO) {
+    if (!remindersOn) return;
     // Se o tutor ainda não respondeu à permissão, pergunta na hora de agendar
     setupAppointmentReminders()
-      .then(() => scheduleAppointmentReminder(appointment, { notifyIfSoon: true }))
+      .then((granted) => {
+        setPermissionGranted(granted);
+        return scheduleAppointmentReminder(appointment, { notifyIfSoon: true });
+      })
       .catch(() => {});
   }
 
@@ -103,7 +154,7 @@ export function AppointmentsProvider({ children }: any) {
       remind(appointment);
       invalidate();
     },
-    onError: alertError('Não foi possível criar o agendamento'),
+    onError: alertError('appointments.createError'),
   });
 
   const updateMutation = useMutation({
@@ -113,7 +164,7 @@ export function AppointmentsProvider({ children }: any) {
       remind(appointment);
       invalidate();
     },
-    onError: alertError('Não foi possível reagendar'),
+    onError: alertError('appointments.rescheduleError'),
   });
 
   const cancelMutation = useMutation({
@@ -122,7 +173,7 @@ export function AppointmentsProvider({ children }: any) {
       cancelAppointmentReminder(id).catch(() => {});
       invalidate();
     },
-    onError: alertError('Não foi possível cancelar o agendamento'),
+    onError: alertError('appointments.cancelError'),
   });
 
   return (
@@ -136,6 +187,8 @@ export function AppointmentsProvider({ children }: any) {
         createAppointment: (data) => createMutation.mutate(data),
         updateAppointment: (id, data) => updateMutation.mutate({ id, data }),
         cancelAppointment: (id) => cancelMutation.mutate(id),
+        remindersEnabled,
+        setRemindersEnabled,
       }}
     >
       {children}

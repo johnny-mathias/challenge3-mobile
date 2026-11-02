@@ -11,6 +11,7 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 
 import { useRefreshControl } from '../hooks/useRefreshControl';
 import { useTheme } from '../theme/ThemeProvider';
+import { useTranslation } from '../i18n';
 import { themes } from '../theme/theme';
 
 interface ErrorStateProps {
@@ -24,6 +25,7 @@ interface ErrorStateProps {
 // plano gratuito do Render podem falhar na primeira chamada enquanto acordam
 export default function ErrorState({ title, error, onRetry, children }: ErrorStateProps) {
   const theme = useTheme();
+  const { t } = useTranslation();
   const styles = createStyles(theme);
   const refreshControl = useRefreshControl(onRetry);
   const [retrying, setRetrying] = useState(false);
@@ -53,7 +55,7 @@ export default function ErrorState({ title, error, onRetry, children }: ErrorSta
         {retrying ? (
           <ActivityIndicator color="#fff" />
         ) : (
-          <Text style={styles.buttonText}>Tentar novamente</Text>
+          <Text style={styles.buttonText}>{t('common.retry')}</Text>
         )}
       </TouchableOpacity>
 

@@ -1,4 +1,5 @@
 import { apiClient } from './client';
+import { t } from '../i18n';
 
 import type { GuardianDTO, Page } from '../types/api.types';
 
@@ -20,7 +21,7 @@ export async function getMyGuardian(email: string): Promise<GuardianDTO> {
     page += 1;
 
     if (page >= data.totalPages) {
-      throw new Error('Cadastro de tutor não encontrado na API');
+      throw new Error(t('error.guardianNotFound'));
     }
   }
 }

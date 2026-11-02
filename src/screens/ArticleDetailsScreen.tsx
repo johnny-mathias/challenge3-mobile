@@ -4,6 +4,7 @@ import { useRoute } from "@react-navigation/native";
 
 import { themes } from "../theme/theme";
 import { useTheme } from "../theme/ThemeProvider";
+import { getLocale, useTranslation } from "../i18n";
 
 import type { Article } from "../types/article";
 
@@ -13,6 +14,8 @@ export default function ArticleDetailsScreen() {
   const { article } = route.params as { article: Article };
 
   const theme = useTheme();
+
+  const { language } = useTranslation();
   const styles = createStyles(theme);
 
   return (
@@ -25,7 +28,7 @@ export default function ArticleDetailsScreen() {
         )}
 
         <Text style={styles.date}>
-          {new Date(article.createdAt).toLocaleDateString()}
+          {new Date(article.createdAt).toLocaleDateString(getLocale(language))}
         </Text>
 
         {article.tags && (

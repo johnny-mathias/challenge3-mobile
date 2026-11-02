@@ -1,12 +1,14 @@
 import { View, Text, StyleSheet } from "react-native";
 
 import { useTheme } from "../theme/ThemeProvider";
+import { getLocale, useTranslation } from "../i18n";
 import { themes } from "../theme/theme";
 
 import type { Article as ArticleType } from "../types/article";
 
 export default function Article({ article }: { article: ArticleType }) {
   const theme = useTheme();
+  const { language } = useTranslation();
   const styles = createStyles(theme);
 
   return (
@@ -19,7 +21,7 @@ export default function Article({ article }: { article: ArticleType }) {
         )}
 
         <Text style={styles.date}>
-          {new Date(article.createdAt).toLocaleDateString("pt-BR", {
+          {new Date(article.createdAt).toLocaleDateString(getLocale(language), {
             day: "2-digit",
             month: "2-digit",
             year: "numeric",

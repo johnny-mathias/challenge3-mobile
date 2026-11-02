@@ -13,6 +13,7 @@ import { useNavigation } from '@react-navigation/native';
 
 import { getErrorMessage } from '../api/errors';
 import { useAuth } from '../context/AuthProvider';
+import { useTranslation } from '../i18n';
 import { useTheme } from '../theme/ThemeProvider';
 import { themes } from '../theme/theme';
 
@@ -20,6 +21,7 @@ export default function RegisterScreen() {
   const theme = useTheme();
   const styles = createStyles(theme);
   const navigation = useNavigation<any>();
+  const { t } = useTranslation();
 
   const { register } = useAuth();
 
@@ -30,12 +32,12 @@ export default function RegisterScreen() {
 
   async function handleRegister() {
     if (!name.trim() || !email.trim() || !password.trim()) {
-      Alert.alert('Atenção', 'Preencha nome, e-mail e senha');
+      Alert.alert(t('common.attention'), t('auth.registerMissing'));
       return;
     }
 
     if (password.length < 6) {
-      Alert.alert('Atenção', 'A senha precisa ter no mínimo 6 caracteres');
+      Alert.alert(t('common.attention'), t('auth.passwordTooShort'));
       return;
     }
 
@@ -44,7 +46,7 @@ export default function RegisterScreen() {
     try {
       await register(name.trim(), email.trim(), password);
     } catch (error: any) {
-      Alert.alert('Erro ao cadastrar', getErrorMessage(error));
+      Alert.alert(t('auth.registerError'), getErrorMessage(error));
     } finally {
       setIsSubmitting(false);
     }
@@ -53,23 +55,23 @@ export default function RegisterScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.card}>
-        <Text style={styles.title}>Criar conta</Text>
-        <Text style={styles.subtitle}>Cadastre-se para usar o SuperBicho</Text>
+        <Text style={styles.title}>{t('auth.registerTitle')}</Text>
+        <Text style={styles.subtitle}>{t('auth.registerSubtitle')}</Text>
 
         <View style={styles.form}>
-          <Text style={styles.label}>Nome</Text>
+          <Text style={styles.label}>{t('auth.name')}</Text>
           <TextInput
             style={styles.input}
-            placeholder="Digite seu nome"
+            placeholder={t('auth.namePlaceholder')}
             placeholderTextColor={theme.colors.textPlaceholder}
             value={name}
             onChangeText={setName}
           />
 
-          <Text style={styles.label}>E-mail</Text>
+          <Text style={styles.label}>{t('auth.email')}</Text>
           <TextInput
             style={styles.input}
-            placeholder="Digite seu e-mail"
+            placeholder={t('auth.emailPlaceholder')}
             placeholderTextColor={theme.colors.textPlaceholder}
             autoCapitalize="none"
             keyboardType="email-address"
@@ -77,10 +79,10 @@ export default function RegisterScreen() {
             onChangeText={setEmail}
           />
 
-          <Text style={styles.label}>Senha</Text>
+          <Text style={styles.label}>{t('auth.password')}</Text>
           <TextInput
             style={styles.input}
-            placeholder="Digite sua senha"
+            placeholder={t('auth.passwordPlaceholder')}
             placeholderTextColor={theme.colors.textPlaceholder}
             secureTextEntry
             value={password}
@@ -96,7 +98,7 @@ export default function RegisterScreen() {
           {isSubmitting ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={styles.buttonText}>Cadastrar</Text>
+            <Text style={styles.buttonText}>{t('auth.register')}</Text>
           )}
         </TouchableOpacity>
 
@@ -104,7 +106,7 @@ export default function RegisterScreen() {
           style={styles.linkButton}
           onPress={() => navigation.navigate('Login')}
         >
-          <Text style={styles.linkText}>Já tem conta? Entrar</Text>
+          <Text style={styles.linkText}>{t('auth.goToLogin')}</Text>
         </TouchableOpacity>
       </View>
     </View>

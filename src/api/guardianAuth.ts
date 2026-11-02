@@ -1,5 +1,6 @@
 import { apiClient } from './client';
 import { fetchCsrfToken } from './csrf';
+import { t } from '../i18n';
 
 function toFormBody(fields: Record<string, string>) {
   return Object.entries(fields)
@@ -23,7 +24,7 @@ export async function registerGuardian(name: string, email: string, password: st
   const finalUrl = finalUrlOf(response);
 
   if (!finalUrl || !finalUrl.includes('/login')) {
-    throw new Error('Não foi possível concluir o cadastro (e-mail já cadastrado ou dados inválidos)');
+    throw new Error(t('error.registerFailed'));
   }
 }
 
@@ -39,7 +40,7 @@ export async function loginGuardian(email: string, password: string) {
   const finalUrl = finalUrlOf(response);
 
   if (!finalUrl || !finalUrl.includes('/guardian/home')) {
-    throw new Error('E-mail ou senha inválidos');
+    throw new Error(t('error.invalidCredentials'));
   }
 }
 

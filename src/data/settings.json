@@ -17,7 +17,7 @@
             "id": "language",
             "name": "Idioma",
             "type": "select",
-            "values": ["en", "pt"],
+            "values": ["pt", "en"],
             "default": "pt"
         }
     ]

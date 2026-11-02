@@ -40,13 +40,17 @@ Este repositório contém o **aplicativo mobile do tutor**, construído em React
   - o lembrete é agendado ao criar ou reagendar uma consulta e dispara **4 horas antes** dela, com a mensagem *"Sua consulta das 14:30 começa em 4 horas"*;
   - se a consulta for daqui a menos de 4 horas, o lembrete chega alguns segundos depois de agendar, já com o tempo que falta (ex: *"começa em 1h30min"*);
   - cancelar a consulta remove o lembrete, e a lista do app mantém os lembretes sincronizados com a API;
+  - podem ser ligados e desligados em **Conta → Notificações** (*Ativadas*/*Desativadas*). Desligar remove os lembretes já agendados, e ligar pede a permissão do Android se preciso;
   - **tocar na notificação abre os detalhes daquele agendamento**, com o app aberto, em segundo plano ou fechado.
 - **Área de administrador** (Node + Oracle) — ver [Área de administrador](#área-de-administrador).
 - **Sobre o app** (em *Conta*) — versão, **hash do commit** da build (com link para o GitHub), ambiente, situação das duas APIs e das notificações, e a equipe.
 - **Puxar para atualizar** em todas as telas que carregam dados da internet, e tela de erro com botão **"Tentar novamente"**.
 - **Mensagens de erro amigáveis** — falhas de rede, servidor iniciando, sessão expirada e erros de login aparecem em português claro, em vez de mensagens técnicas.
 - **Artigos** informativos sobre cuidados com animais.
-- Suporte a tema claro/escuro.
+- **Configurações da conta** (*Conta*):
+  - **Tema** claro/escuro, com ícone de sol ou lua conforme o tema atual;
+  - **Notificações** ativadas/desativadas;
+  - **Idioma**: português do Brasil (padrão) ou inglês. A escolha fica salva no aparelho e muda todas as telas, as mensagens de erro e o texto do lembrete. Conteúdos que vêm das APIs (artigos, espécies digitadas, mensagens do backend Oracle) continuam no idioma original.
 
 ## Tecnologias
 
@@ -82,8 +86,8 @@ Este repositório contém o **aplicativo mobile do tutor**, construído em React
 ### Passo a passo
 
 ```bash
-git clone https://github.com/2TDSPX/challenge12-superbicho.git
-cd challenge12-superbicho
+git clone https://github.com/johnny-mathias/challenge3-mobile.git
+cd challenge3-mobile
 npm install
 npx expo start
 ```
@@ -92,7 +96,7 @@ Depois é só escanear o QR Code com o app Expo Go, ou pressionar `a` (Android) 
 
 > As duas APIs rodam no plano gratuito do Render, que "dorme" depois de alguns minutos sem uso. A primeira requisição após um tempo parado pode demorar até um minuto enquanto o servidor acorda. Se uma tela mostrar erro, use **"Tentar novamente"** ou puxe a tela para baixo. A tela **Conta → Sobre o app** mostra se cada API já está online.
 
-> **Notificações no Expo Go:** os lembretes são notificações *locais* e funcionam no Expo Go e no APK. O app importa só os módulos locais do `expo-notifications` (ver [`src/services/notifications.ts`](src/services/notifications.ts)), porque o pacote completo tenta registrar push remoto e isso derruba o Expo Go no Android desde o SDK 53. O Expo Go também não deixa o app criar um canal de notificação próprio nem agendar alarmes exatos, então lá o Android pode atrasar o lembrete em até ~1h. No APK, o app declara `USE_EXACT_ALARM` e o lembrete sai no horário exato. Se a permissão de notificações estiver desligada, ela pode ser pedida de novo em **Conta → Sobre o app → Lembretes de consulta**.
+> **Notificações no Expo Go:** os lembretes são notificações *locais* e funcionam no Expo Go e no APK. O app importa só os módulos locais do `expo-notifications` (ver [`src/services/notifications.ts`](src/services/notifications.ts)), porque o pacote completo tenta registrar push remoto e isso derruba o Expo Go no Android desde o SDK 53. O Expo Go também não deixa o app criar um canal de notificação próprio nem agendar alarmes exatos, então lá o Android pode atrasar o lembrete em até ~1h. No APK, o app declara `USE_EXACT_ALARM` e o lembrete sai no horário exato. Se a permissão de notificações estiver desligada, ela pode ser pedida de novo em **Conta → Notificações** ou em **Conta → Sobre o app → Lembretes de consulta**.
 
 ### Variáveis de ambiente (opcional)
 
@@ -166,6 +170,7 @@ src/
 ├── context/       # Contextos globais (autenticação, agendamentos)
 ├── data/          # Conteúdo estático local (artigos, configurações)
 ├── hooks/         # Hooks de dados com TanStack Query, puxar para atualizar e navegação pelo lembrete
+├── i18n/          # Idiomas (pt-BR e inglês): dicionário de textos e provider
 ├── screens/       # Telas do app
 ├── services/      # Lembretes de consulta (notificações) e exportação do JSON
 ├── theme/         # Cores e tema claro/escuro

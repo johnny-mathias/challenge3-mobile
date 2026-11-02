@@ -4,15 +4,13 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 
 import { useIsAdmin } from '../hooks/queries';
 import { useExportAnimals } from '../hooks/useExportAnimals';
+import { useTranslation } from '../i18n';
 import { useTheme } from '../theme/ThemeProvider';
 import { themes } from '../theme/theme';
 
-const EXPORT_WARNING_TITLE = 'Download dos animais';
-const EXPORT_WARNING_MESSAGE =
-  'Ao fazer download, você baixará todos os animais registrados na SuperBicho';
-
 export default function ExportAnimalsButton() {
   const theme = useTheme();
+  const { t } = useTranslation();
   const styles = createStyles(theme);
   const isAdmin = useIsAdmin();
   const { exportAnimals, isExporting } = useExportAnimals();
@@ -21,7 +19,7 @@ export default function ExportAnimalsButton() {
     try {
       await exportAnimals();
     } catch (error: any) {
-      Alert.alert('Erro', error?.message ?? 'Não foi possível exportar os animais');
+      Alert.alert(t('export.error'), error?.message ?? t('error.generic'));
     }
   }
 
@@ -29,13 +27,13 @@ export default function ExportAnimalsButton() {
   function handlePress() {
     if (Platform.OS === 'web') {
       // Alert.alert não exibe diálogos no react-native-web
-      if (window.confirm(`${EXPORT_WARNING_TITLE}\n\n${EXPORT_WARNING_MESSAGE}`)) startExport();
+      if (window.confirm(`${t('export.title')}\n\n${t('export.message')}`)) startExport();
       return;
     }
 
-    Alert.alert(EXPORT_WARNING_TITLE, EXPORT_WARNING_MESSAGE, [
-      { text: 'Cancelar', style: 'cancel' },
-      { text: 'Baixar', onPress: startExport },
+    Alert.alert(t('export.title'), t('export.message'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: t('export.confirm'), onPress: startExport },
     ]);
   }
 
@@ -48,7 +46,7 @@ export default function ExportAnimalsButton() {
       onPress={handlePress}
       disabled={isExporting}
       accessibilityRole="button"
-      accessibilityLabel="Baixar JSON dos animais"
+      accessibilityLabel={t('export.label')}
     >
       {isExporting ? (
         <ActivityIndicator size="small" color="#fff" />

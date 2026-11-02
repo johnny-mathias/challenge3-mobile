@@ -15,12 +15,14 @@ import {
 import { useAppointments } from '../context/AppointmentsProvider';
 import { useRefreshControl } from '../hooks/useRefreshControl';
 import { useTheme } from '../theme/ThemeProvider';
+import { formatIsoDate, translateStatus, useTranslation } from '../i18n';
 import { themes } from '../theme/theme';
 
 import type { AppointmentDTO } from '../types/api.types';
 
 export default function AppointmentDetailsScreen() {
     const theme = useTheme();
+    const { t } = useTranslation();
     const styles = createStyles(theme);
   const route = useRoute<any>();
 
@@ -47,7 +49,7 @@ export default function AppointmentDetailsScreen() {
         {isLoading ? (
           <ActivityIndicator size="large" color={theme.colors.primary} />
         ) : (
-          <Text style={styles.text}>Este agendamento não está mais ativo</Text>
+          <Text style={styles.text}>{t('appointments.inactive')}</Text>
         )}
       </ScrollView>
     );
@@ -57,11 +59,14 @@ export default function AppointmentDetailsScreen() {
       <ScrollView style={styles.container} refreshControl={refreshControl}>
         <View style={styles.card}>
           <Text style={styles.title}>
-            {appointment.date} às {appointment.time}
+            {t('appointments.at', {
+              date: formatIsoDate(appointment.date),
+              time: appointment.time.slice(0, 5),
+            })}
           </Text>
 
           <Text style={styles.label}>
-            Pet
+            {t('appointments.pet')}
           </Text>
 
           <Text style={styles.text}>
@@ -69,7 +74,7 @@ export default function AppointmentDetailsScreen() {
           </Text>
 
           <Text style={styles.label}>
-            Clínica
+            {t('appointments.clinic')}
           </Text>
 
           <Text style={styles.text}>
@@ -77,19 +82,19 @@ export default function AppointmentDetailsScreen() {
           </Text>
 
           <Text style={styles.label}>
-            Veterinário
+            {t('appointments.vet')}
           </Text>
 
           <Text style={styles.text}>
-            {appointment.veterinarianName ?? 'A definir pela clínica'}
+            {appointment.veterinarianName ?? t('appointments.vetTbd')}
           </Text>
 
           <Text style={styles.label}>
-            Status
+            {t('appointments.status')}
           </Text>
 
           <Text style={styles.text}>
-            {appointment.status}
+            {translateStatus(appointment.status)}
           </Text>
         </View>
 
@@ -105,7 +110,7 @@ export default function AppointmentDetailsScreen() {
           }
         >
           <Text style={styles.buttonText}>
-            Reagendar
+            {t('appointments.reschedule')}
           </Text>
         </TouchableOpacity>
 
@@ -118,7 +123,7 @@ export default function AppointmentDetailsScreen() {
           }}
         >
           <Text style={styles.buttonText}>
-            Cancelar
+            {t('appointments.cancel')}
           </Text>
         </TouchableOpacity>
       </ScrollView>

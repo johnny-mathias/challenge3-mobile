@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import {
   TouchableOpacity,
   Text,
@@ -11,12 +12,17 @@ import { themes } from '../theme/theme';
 interface SettingsRowProps {
   title: string;
   value?: string | boolean;
+  // Conteúdo à direita no lugar do texto (ex: ícone do tema)
+  accessory?: ReactNode;
+  accessibilityLabel?: string;
   onPress: () => void;
 }
 
 export default function SettingsRow({
   title,
   value,
+  accessory,
+  accessibilityLabel,
   onPress,
 }: SettingsRowProps) {
   const theme = useTheme();
@@ -27,14 +33,20 @@ export default function SettingsRow({
       style={styles.container}
       onPress={onPress}
       activeOpacity={0.7}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
     >
       <Text style={styles.title}>
         {title}
       </Text>
 
-      <Text style={styles.value}>
-        {String(value)}
-      </Text>
+      {accessory ? (
+        <View>{accessory}</View>
+      ) : (
+        <Text style={styles.value}>
+          {value == null ? '' : String(value)}
+        </Text>
+      )}
     </TouchableOpacity>
   );
 }

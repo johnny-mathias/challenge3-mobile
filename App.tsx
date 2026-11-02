@@ -30,6 +30,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AppointmentsProvider } from "./src/context/AppointmentsProvider";
 import { AuthProvider, useAuth } from "./src/context/AuthProvider";
 import { useReminderNavigation } from "./src/hooks/useReminderNavigation";
+import { LanguageProvider, useTranslation } from "./src/i18n";
 
 const Stack = createNativeStackNavigator();
 const AuthStack = createNativeStackNavigator();
@@ -51,6 +52,7 @@ function AppContent() {
   const styles = createStyles(theme);
 
   const { user, guardian, isLoading, sessionExpired } = useAuth();
+  const { t } = useTranslation();
 
   const navigationRef = useNavigationContainerRef();
   const [isNavigationReady, setNavigationReady] = useState(false);
@@ -131,7 +133,7 @@ function AppContent() {
 
                   headerRight: () => (
                     <TouchableOpacity onPress={() => navigation.popToTop()}>
-                      <Text style={styles.navButton}>Início</Text>
+                      <Text style={styles.navButton}>{t("nav.start")}</Text>
                     </TouchableOpacity>
                   ),
                 })}
@@ -142,7 +144,7 @@ function AppContent() {
                 options={({ navigation }) => ({
                   headerBackButtonDisplayMode: "minimal",
                   headerTintColor: theme.colors.text,
-                  title: "Mais informações",
+                  title: t("nav.moreInfo"),
                   headerTitleStyle: {
                     color: theme.colors.text,
                   },
@@ -160,7 +162,7 @@ function AppContent() {
                 options={({ navigation }) => ({
                   headerBackButtonDisplayMode: "minimal",
                   headerTintColor: theme.colors.text,
-                  title: "Mais informações",
+                  title: t("nav.moreInfo"),
                   headerTitleStyle: {
                     color: theme.colors.text,
                   },
@@ -195,7 +197,7 @@ function AppContent() {
                 options={() => ({
                   headerBackButtonDisplayMode: "minimal",
                   headerTintColor: theme.colors.text,
-                  title: "Novo Pet",
+                  title: t("nav.newPet"),
                   headerTitleStyle: {
                     color: theme.colors.text,
                   },
@@ -212,7 +214,7 @@ function AppContent() {
                 options={() => ({
                   headerBackButtonDisplayMode: "minimal",
                   headerTintColor: theme.colors.text,
-                  title: "Sobre o app",
+                  title: t("nav.about"),
                   headerTitleStyle: {
                     color: theme.colors.text,
                   },
@@ -235,9 +237,11 @@ export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ThemeProvider>
-        <AuthProvider>
-          <AppContent />
-        </AuthProvider>
+        <LanguageProvider>
+          <AuthProvider>
+            <AppContent />
+          </AuthProvider>
+        </LanguageProvider>
       </ThemeProvider>
     </GestureHandlerRootView>
   );

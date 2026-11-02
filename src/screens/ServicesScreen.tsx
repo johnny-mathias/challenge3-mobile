@@ -14,10 +14,12 @@ import ServiceRow from "../components/ServiceRow";
 import { useAppointments } from "../context/AppointmentsProvider";
 import { useRefreshControl } from "../hooks/useRefreshControl";
 import { useTheme } from "../theme/ThemeProvider";
+import { useTranslation } from "../i18n";
 import { themes } from "../theme/theme";
 
 export default function ServicesScreen() {
   const theme = useTheme();
+  const { t } = useTranslation();
   const styles = createStyles(theme);
   const navigation = useNavigation<any>();
 
@@ -35,7 +37,7 @@ export default function ServicesScreen() {
   if (isError) {
     return (
       <ErrorState
-        title="Não foi possível carregar seus agendamentos"
+        title={t("appointments.loadError")}
         error={error}
         onRetry={refetch}
       />
@@ -52,9 +54,7 @@ export default function ServicesScreen() {
         refreshControl={refreshControl}
         keyExtractor={(item) => item.id.toString()}
         ListEmptyComponent={
-          <Text style={styles.emptyText}>
-            Quando você possuir algum agendamento, ele deverá aparecer aqui
-          </Text>
+          <Text style={styles.emptyText}>{t("appointments.empty")}</Text>
         }
         renderItem={({ item }) => <ServiceRow appointment={item} />}
       />
@@ -63,7 +63,7 @@ export default function ServicesScreen() {
         style={styles.fab}
         onPress={() => navigation.navigate("AppointmentFormScreen")}
       >
-        <Text style={styles.fabText}>Agendar</Text>
+        <Text style={styles.fabText}>{t("appointments.schedule")}</Text>
       </TouchableOpacity>
     </View>
   );

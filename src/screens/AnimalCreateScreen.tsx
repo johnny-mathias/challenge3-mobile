@@ -20,6 +20,7 @@ import { useBreeds, useSpecies } from '../hooks/queries';
 import { useOracleAnimalMutations } from '../hooks/useOracleAnimalMutations';
 import { useRefreshControl } from '../hooks/useRefreshControl';
 import { useTheme } from '../theme/ThemeProvider';
+import { formatIsoDate, useTranslation } from '../i18n';
 import { themes } from '../theme/theme';
 
 import type { OracleAnimalInput } from '../types/api.types';
@@ -34,11 +35,6 @@ function toIsoDate(date: Date) {
   return `${date.getFullYear()}-${month}-${day}`;
 }
 
-function formatDate(isoDate: string) {
-  const [year, month, day] = isoDate.split('-');
-  return `${day}/${month}/${year}`;
-}
-
 function parseDecimal(value: string) {
   if (!value.trim()) return undefined;
   return parseFloat(value.replace(',', '.'));
@@ -46,6 +42,7 @@ function parseDecimal(value: string) {
 
 export default function AnimalCreateScreen() {
   const theme = useTheme();
+  const { t } = useTranslation();
   const styles = createStyles(theme);
   const navigation = useNavigation<any>();
 
@@ -79,17 +76,17 @@ export default function AnimalCreateScreen() {
   const selectedBreed = breeds.data?.find((b) => b.id === racaId);
 
   function getSpeciesLabel() {
-    if (species.isLoading) return 'Carregando espécies...';
-    if (species.isError) return 'Erro ao carregar espécies (toque para tentar de novo)';
-    return selectedSpecies?.nome ?? 'Selecione a espécie';
+    if (species.isLoading) return t('oraclePet.loadingSpecies');
+    if (species.isError) return t('oraclePet.speciesError');
+    return selectedSpecies?.nome ?? t('oraclePet.selectSpecies');
   }
 
   function getBreedLabel() {
-    if (especieId == null) return 'Selecione a espécie primeiro';
-    if (breeds.isLoading) return 'Carregando raças...';
-    if (breeds.isError) return 'Erro ao carregar raças (toque para tentar de novo)';
-    if (breeds.data?.length === 0) return 'Nenhuma raça cadastrada para esta espécie';
-    return selectedBreed ? `${selectedBreed.nome} · ${selectedBreed.porte}` : 'Selecione a raça';
+    if (especieId == null) return t('oraclePet.selectSpeciesFirst');
+    if (breeds.isLoading) return t('oraclePet.loadingBreeds');
+    if (breeds.isError) return t('oraclePet.breedsError');
+    if (breeds.data?.length === 0) return t('oraclePet.noBreeds');
+    return selectedBreed ? `${selectedBreed.nome} · ${selectedBreed.porte}` : t('oraclePet.selectBreed');
   }
 
   function handleOpenSpecies() {
@@ -112,12 +109,12 @@ export default function AnimalCreateScreen() {
     setError(null);
 
     if (!nome.trim() || !genero || especieId == null || racaId == null) {
-      setError('Nome, gênero, espécie e raça são obrigatórios');
+      setError(t('oraclePet.required'));
       return;
     }
 
     if (dataNascimento && !DATE_PATTERN.test(dataNascimento)) {
-      setError('Data de nascimento deve estar no formato AAAA-MM-DD');
+      setError(t('oraclePet.invalidDate'));
       return;
     }
 
@@ -137,41 +134,41 @@ export default function AnimalCreateScreen() {
     };
 
     if (Number.isNaN(input.peso) || Number.isNaN(input.altura)) {
-      setError('Peso e altura precisam ser números válidos');
+      setError(t('oraclePet.invalidNumbers'));
       return;
     }
 
     try {
       const id = await createOracleAnimal(input);
-      Alert.alert('Pet cadastrado', `${input.nome} foi salvo no Oracle (ID ${id}).`);
+      Alert.alert(t('oraclePet.savedTitle'), t('oraclePet.savedMessage', { name: input.nome, id }));
       navigation.goBack();
     } catch (err: any) {
-      setError(err?.message ?? 'Não foi possível cadastrar o pet');
+      setError(err?.message ?? t('petForm.saveError'));
     }
   }
 
   return (
     <>
       <ScrollView style={styles.container} refreshControl={refreshControl}>
-        <Text style={styles.label}>NOME *</Text>
+        <Text style={styles.label}>{t('oraclePet.name')}</Text>
         <TextInput
           style={styles.input}
           value={nome}
           onChangeText={setNome}
-          placeholder="Nome do pet"
+          placeholder={t('petForm.namePlaceholder')}
           placeholderTextColor={theme.colors.textPlaceholder}
         />
 
-        <Text style={styles.label}>APELIDO</Text>
+        <Text style={styles.label}>{t('oraclePet.nickname')}</Text>
         <TextInput
           style={styles.input}
           value={apelido}
           onChangeText={setApelido}
-          placeholder="Ex: Totó"
+          placeholder={t('oraclePet.nicknamePlaceholder')}
           placeholderTextColor={theme.colors.textPlaceholder}
         />
 
-        <Text style={styles.label}>GÊNERO *</Text>
+        <Text style={styles.label}>{t('oraclePet.gender')}</Text>
         <View style={styles.segment}>
           {(['M', 'F'] as const).map((value) => (
             <TouchableOpacity
@@ -180,19 +177,19 @@ export default function AnimalCreateScreen() {
               onPress={() => setGenero(value)}
             >
               <Text style={[styles.segmentText, genero === value && styles.segmentTextSelected]}>
-                {value === 'M' ? 'Macho' : 'Fêmea'}
+                {value === 'M' ? t('oraclePet.male') : t('oraclePet.female')}
               </Text>
             </TouchableOpacity>
           ))}
         </View>
 
-        <Text style={styles.label}>ESPÉCIE *</Text>
+        <Text style={styles.label}>{t('oraclePet.species')}</Text>
         <TouchableOpacity style={styles.dropdownButton} onPress={handleOpenSpecies}>
           <Text style={styles.dropdownText}>{getSpeciesLabel()}</Text>
           <Text style={styles.dropdownArrow}>▼</Text>
         </TouchableOpacity>
 
-        <Text style={styles.label}>RAÇA *</Text>
+        <Text style={styles.label}>{t('oraclePet.breed')}</Text>
         <TouchableOpacity
           style={[styles.dropdownButton, especieId == null && styles.disabled]}
           onPress={handleOpenBreed}
@@ -202,26 +199,26 @@ export default function AnimalCreateScreen() {
           <Text style={styles.dropdownArrow}>▼</Text>
         </TouchableOpacity>
 
-        <Text style={styles.label}>DATA DE NASCIMENTO</Text>
+        <Text style={styles.label}>{t('oraclePet.birthDate')}</Text>
         {Platform.OS === 'web' ? (
           <TextInput
             style={styles.input}
             value={dataNascimento}
             onChangeText={setDataNascimento}
-            placeholder="AAAA-MM-DD"
+            placeholder={t('oraclePet.birthDatePlaceholder')}
             placeholderTextColor={theme.colors.textPlaceholder}
           />
         ) : (
           <TouchableOpacity style={styles.input} onPress={() => setShowDatePicker(true)}>
             <Text style={dataNascimento ? styles.dropdownText : styles.placeholderText}>
-              {dataNascimento ? formatDate(dataNascimento) : 'Selecione a data'}
+              {dataNascimento ? formatIsoDate(dataNascimento) : t('oraclePet.selectDate')}
             </Text>
           </TouchableOpacity>
         )}
 
         <View style={styles.row}>
           <View style={styles.rowItem}>
-            <Text style={styles.label}>PESO (KG)</Text>
+            <Text style={styles.label}>{t('oraclePet.weight')}</Text>
             <TextInput
               style={styles.input}
               value={peso}
@@ -233,7 +230,7 @@ export default function AnimalCreateScreen() {
           </View>
 
           <View style={styles.rowItem}>
-            <Text style={styles.label}>ALTURA (CM)</Text>
+            <Text style={styles.label}>{t('oraclePet.height')}</Text>
             <TextInput
               style={styles.input}
               value={altura}
@@ -245,12 +242,12 @@ export default function AnimalCreateScreen() {
           </View>
         </View>
 
-        <Text style={styles.label}>COR</Text>
+        <Text style={styles.label}>{t('oraclePet.color')}</Text>
         <TextInput
           style={styles.input}
           value={cor}
           onChangeText={setCor}
-          placeholder="Ex: Caramelo"
+          placeholder={t('oraclePet.colorPlaceholder')}
           placeholderTextColor={theme.colors.textPlaceholder}
         />
 
@@ -259,7 +256,7 @@ export default function AnimalCreateScreen() {
           style={styles.input}
           value={rga}
           onChangeText={setRga}
-          placeholder="Registro Geral do Animal"
+          placeholder={t('oraclePet.rgaPlaceholder')}
           placeholderTextColor={theme.colors.textPlaceholder}
         />
 
@@ -268,12 +265,12 @@ export default function AnimalCreateScreen() {
           style={styles.input}
           value={microchip}
           onChangeText={setMicrochip}
-          placeholder="Código do microchip"
+          placeholder={t('oraclePet.microchipPlaceholder')}
           placeholderTextColor={theme.colors.textPlaceholder}
         />
 
         <View style={styles.switchRow}>
-          <Text style={styles.switchLabel}>Castrado</Text>
+          <Text style={styles.switchLabel}>{t('oraclePet.neutered')}</Text>
           <Switch
             value={castrado}
             onValueChange={setCastrado}
@@ -289,7 +286,7 @@ export default function AnimalCreateScreen() {
           disabled={isCreating}
         >
           <Text style={styles.buttonText}>
-            {isCreating ? 'Salvando...' : 'Cadastrar pet'}
+            {isCreating ? t('common.saving') : t('petForm.create')}
           </Text>
         </TouchableOpacity>
       </ScrollView>

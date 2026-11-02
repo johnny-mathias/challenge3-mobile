@@ -17,6 +17,7 @@ import articles from "../data/articles.json";
 
 import { themes } from "../theme/theme";
 import { useTheme } from "../theme/ThemeProvider";
+import { useTranslation } from "../i18n";
 import ServiceRow from "../components/ServiceRow";
 import { useAppointments } from "../context/AppointmentsProvider";
 
@@ -26,6 +27,7 @@ export default function HomeScreen() {
   const navigation = useNavigation<any>();
   const { appointments, isLoading, isError } = useAppointments();
   const theme = useTheme();
+  const { t } = useTranslation();
   const styles = createStyles(theme);
 
   return (
@@ -54,14 +56,14 @@ export default function HomeScreen() {
       </View>
 
       <View style={styles.appointmentsContainer}>
-        <Text style={styles.appointmentsTitle}>Agendamentos</Text>
+        <Text style={styles.appointmentsTitle}>{t("appointments.title")}</Text>
 
         {isLoading && (
           <ActivityIndicator size="large" color={theme.colors.primary} />
         )}
 
         {isError && (
-          <Text style={styles.errorText}>Não foi possível carregar seus agendamentos</Text>
+          <Text style={styles.errorText}>{t("appointments.loadError")}</Text>
         )}
 
         {!isLoading && !isError && (
@@ -72,9 +74,7 @@ export default function HomeScreen() {
             data={appointments}
             keyExtractor={(item) => item.id.toString()}
             ListEmptyComponent={
-              <Text style={styles.emptyText}>
-                Quando você possuir algum agendamento, ele deverá aparecer aqui
-              </Text>
+              <Text style={styles.emptyText}>{t("appointments.empty")}</Text>
             }
             renderItem={({ item }) => <ServiceRow appointment={item} />}
           />

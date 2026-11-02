@@ -5,12 +5,14 @@ import { Swipeable } from "react-native-gesture-handler";
 import { useNavigation } from "@react-navigation/native";
 
 import { useTheme } from "../theme/ThemeProvider";
+import { formatIsoDate, useTranslation } from "../i18n";
 import { themes } from "../theme/theme";
 
 import type { AppointmentDTO } from "../types/api.types";
 
 export default function ServiceRow({ appointment }: { appointment: AppointmentDTO }) {
   const theme = useTheme();
+  const { t } = useTranslation();
   const styles = createStyles(theme);
   const navigation = useNavigation<any>();
 
@@ -38,12 +40,12 @@ export default function ServiceRow({ appointment }: { appointment: AppointmentDT
         </View>
 
         <View style={styles.rightArea}>
-          <Text style={styles.date}>{appointment.date}</Text>
+          <Text style={styles.date}>{formatIsoDate(appointment.date)}</Text>
 
-          <Text style={styles.time}>{appointment.time}</Text>
+          <Text style={styles.time}>{appointment.time.slice(0, 5)}</Text>
 
           <TouchableOpacity style={styles.button} onPress={handleEdit}>
-            <Text style={styles.buttonText}>Reagendar</Text>
+            <Text style={styles.buttonText}>{t("appointments.reschedule")}</Text>
           </TouchableOpacity>
         </View>
       </TouchableOpacity>

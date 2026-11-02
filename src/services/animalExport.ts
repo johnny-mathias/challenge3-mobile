@@ -3,6 +3,8 @@ import { Platform } from 'react-native';
 import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 
+import { t } from '../i18n';
+
 import type { OracleAnimal } from '../types/api.types';
 
 // Mesmo nome usado no script do mongoimport (--file "./03_animais.json" --jsonArray)
@@ -34,12 +36,12 @@ export async function exportAnimalsJson(animals: OracleAnimal[]) {
   file.write(content);
 
   if (!(await Sharing.isAvailableAsync())) {
-    throw new Error('Compartilhamento de arquivos indisponível neste dispositivo');
+    throw new Error(t('export.sharingUnavailable'));
   }
 
   await Sharing.shareAsync(file.uri, {
     mimeType: 'application/json',
-    dialogTitle: 'Salvar dataset de animais',
+    dialogTitle: t('export.dialogTitle'),
     UTI: 'public.json',
   });
 }
