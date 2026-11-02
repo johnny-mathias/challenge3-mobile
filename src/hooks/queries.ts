@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthProvider';
 
 import { getMyAnimals } from '../api/animals.api';
 import { getApprovedClinics } from '../api/clinics.api';
+import { checkJavaApi, checkOracleApi } from '../api/health.api';
 import {
   getAllOracleAnimals,
   getBreedsBySpecies,
@@ -11,6 +12,7 @@ import {
   getSpecies,
   getUserRole,
 } from '../api/oracle.api';
+import { areRemindersEnabled } from '../services/appointmentReminders';
 
 export function useMyAnimals() {
   const { guardian } = useAuth();
@@ -69,4 +71,18 @@ export function useBreeds(especieId: number | null) {
     queryFn: () => getBreedsBySpecies(especieId!),
     enabled: especieId != null,
   });
+}
+
+// Tela "Sobre o app": situação das duas APIs (uma tentativa extra cobre o
+// servidor do Render acordando)
+export function useServiceStatus() {
+  const options = { retry: 1, staleTime: 0 };
+  return {
+    javaApi: useQuery({ queryKey: ['health', 'java'], queryFn: checkJavaApi, ...options }),
+    oracleApi: useQuery({ queryKey: ['health', 'oracle'], queryFn: checkOracleApi, ...options }),
+  };
+}
+
+export function useRemindersEnabled() {
+  return useQuery({ queryKey: ['reminders', 'permission'], queryFn: areRemindersEnabled });
 }

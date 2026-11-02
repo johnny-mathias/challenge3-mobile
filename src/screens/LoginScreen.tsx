@@ -11,6 +11,7 @@ import {
 
 import { useNavigation } from '@react-navigation/native';
 
+import { getErrorMessage } from '../api/errors';
 import { useAuth } from '../context/AuthProvider';
 import { useTheme } from '../theme/ThemeProvider';
 import { themes } from '../theme/theme';
@@ -37,7 +38,7 @@ export default function LoginScreen() {
     try {
       await login(email.trim(), password);
     } catch (error: any) {
-      Alert.alert('Erro ao entrar', error?.message ?? 'Verifique suas credenciais');
+      Alert.alert('Erro ao entrar', getErrorMessage(error));
     } finally {
       setIsSubmitting(false);
     }

@@ -2,10 +2,11 @@ import AppointmentDetailsScreen from "./src/screens/AppointmentDetailsScreen";
 import AppointmentFormScreen from "./src/screens/AppointmentFormScreen";
 
 import "react-native-gesture-handler";
+import { useState } from "react";
 import { ActivityIndicator, StyleSheet, Text, View, Image, TouchableOpacity } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
-import { NavigationContainer } from "@react-navigation/native";
+import { NavigationContainer, useNavigationContainerRef } from "@react-navigation/native";
 
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
@@ -22,11 +23,13 @@ import logo from "./assets/sb-logo-png.png";
 import ArticleDetailsScreen from "./src/screens/ArticleDetailsScreen";
 import AnimalFormScreen from "./src/screens/AnimalFormScreen";
 import AnimalCreateScreen from "./src/screens/AnimalCreateScreen";
+import AboutScreen from "./src/screens/AboutScreen";
 import LoginScreen from "./src/screens/LoginScreen";
 import RegisterScreen from "./src/screens/RegisterScreen";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AppointmentsProvider } from "./src/context/AppointmentsProvider";
 import { AuthProvider, useAuth } from "./src/context/AuthProvider";
+import { useReminderNavigation } from "./src/hooks/useReminderNavigation";
 
 const Stack = createNativeStackNavigator();
 const AuthStack = createNativeStackNavigator();
@@ -49,6 +52,12 @@ function AppContent() {
 
   const { user, guardian, isLoading, sessionExpired } = useAuth();
 
+  const navigationRef = useNavigationContainerRef();
+  const [isNavigationReady, setNavigationReady] = useState(false);
+  const isLoggedIn = !!user && !!guardian && !sessionExpired;
+
+  useReminderNavigation(navigationRef, isLoggedIn && isNavigationReady);
+
   if (isLoading) {
     return (
       <View style={[styles.loadingContainer, { backgroundColor: theme.colors.background }]}>
@@ -57,7 +66,7 @@ function AppContent() {
     );
   }
 
-  if (!user || !guardian || sessionExpired) {
+  if (!isLoggedIn) {
     return (
       <NavigationContainer>
         <AuthNavigator />
@@ -68,7 +77,10 @@ function AppContent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AppointmentsProvider>
-        <NavigationContainer>
+        <NavigationContainer
+          ref={navigationRef}
+          onReady={() => setNavigationReady(true)}
+        >
           <SafeAreaProvider>
             <Stack.Navigator initialRouteName="MainTabs">
               <Stack.Screen
@@ -184,6 +196,23 @@ function AppContent() {
                   headerBackButtonDisplayMode: "minimal",
                   headerTintColor: theme.colors.text,
                   title: "Novo Pet",
+                  headerTitleStyle: {
+                    color: theme.colors.text,
+                  },
+                  headerShown: true,
+                  headerStyle: {
+                    backgroundColor: theme.colors.backgroundSecondary,
+                    borderBottomColor: theme.colors.border,
+                  },
+                })}
+              />
+              <Stack.Screen
+                name="AboutScreen"
+                component={AboutScreen}
+                options={() => ({
+                  headerBackButtonDisplayMode: "minimal",
+                  headerTintColor: theme.colors.text,
+                  title: "Sobre o app",
                   headerTitleStyle: {
                     color: theme.colors.text,
                   },

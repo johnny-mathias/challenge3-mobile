@@ -18,6 +18,7 @@ import { useNavigation } from '@react-navigation/native';
 
 import { useBreeds, useSpecies } from '../hooks/queries';
 import { useOracleAnimalMutations } from '../hooks/useOracleAnimalMutations';
+import { useRefreshControl } from '../hooks/useRefreshControl';
 import { useTheme } from '../theme/ThemeProvider';
 import { themes } from '../theme/theme';
 
@@ -67,6 +68,10 @@ export default function AnimalCreateScreen() {
 
   const species = useSpecies();
   const breeds = useBreeds(especieId);
+  const refreshControl = useRefreshControl(
+    species.refetch,
+    ...(especieId != null ? [breeds.refetch] : []),
+  );
 
   const { createOracleAnimal, isCreating } = useOracleAnimalMutations();
 
@@ -82,6 +87,7 @@ export default function AnimalCreateScreen() {
   function getBreedLabel() {
     if (especieId == null) return 'Selecione a espécie primeiro';
     if (breeds.isLoading) return 'Carregando raças...';
+    if (breeds.isError) return 'Erro ao carregar raças (toque para tentar de novo)';
     if (breeds.data?.length === 0) return 'Nenhuma raça cadastrada para esta espécie';
     return selectedBreed ? `${selectedBreed.nome} · ${selectedBreed.porte}` : 'Selecione a raça';
   }
@@ -95,6 +101,10 @@ export default function AnimalCreateScreen() {
   }
 
   function handleOpenBreed() {
+    if (breeds.isError) {
+      breeds.refetch();
+      return;
+    }
     if (breeds.data?.length) setOpenDropdown('breed');
   }
 
@@ -142,7 +152,7 @@ export default function AnimalCreateScreen() {
 
   return (
     <>
-      <ScrollView style={styles.container}>
+      <ScrollView style={styles.container} refreshControl={refreshControl}>
         <Text style={styles.label}>NOME *</Text>
         <TextInput
           style={styles.input}
@@ -350,12 +360,11 @@ export default function AnimalCreateScreen() {
           mode="date"
           display="spinner"
           maximumDate={new Date()}
-          onChange={(event, selectedDate) => {
+          onValueChange={(_event, selectedDate) => {
             setShowDatePicker(false);
-            if (event.type !== 'dismissed' && selectedDate) {
-              setDataNascimento(toIsoDate(selectedDate));
-            }
+            setDataNascimento(toIsoDate(selectedDate));
           }}
+          onDismiss={() => setShowDatePicker(false)}
         />
       )}
     </>

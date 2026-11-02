@@ -8,7 +8,7 @@ export async function fetchCsrfToken(path: string = '/guardian/home') {
   const match = typeof data === 'string' ? data.match(CSRF_INPUT_PATTERN) : null;
 
   if (!match) {
-    throw new Error('Não foi possível obter o token de segurança (sessão expirada?)');
+    throw new Error('Sua sessão expirou. Saia e entre novamente na sua conta');
   }
 
   return match[1];

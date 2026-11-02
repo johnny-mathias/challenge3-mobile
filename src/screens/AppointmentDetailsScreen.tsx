@@ -1,4 +1,6 @@
 import {
+  ActivityIndicator,
+  ScrollView,
   View,
   Text,
   StyleSheet,
@@ -11,6 +13,7 @@ import {
 } from '@react-navigation/native';
 
 import { useAppointments } from '../context/AppointmentsProvider';
+import { useRefreshControl } from '../hooks/useRefreshControl';
 import { useTheme } from '../theme/ThemeProvider';
 import { themes } from '../theme/theme';
 
@@ -23,13 +26,35 @@ export default function AppointmentDetailsScreen() {
 
   const navigation = useNavigation<any>();
 
-  const { cancelAppointment } =
+  const { appointments, isLoading, refetch, cancelAppointment } =
     useAppointments();
+  const refreshControl = useRefreshControl(refetch);
 
-  const { appointment } = route.params as { appointment: AppointmentDTO };
+  // Vem da lista (appointment) ou do toque no lembrete (appointmentId);
+  // a versão da lista é a mais atual, inclusive depois de reagendar
+  const params = route.params as { appointment?: AppointmentDTO; appointmentId?: number };
+  const appointmentId = params.appointment?.id ?? params.appointmentId;
+  const appointment =
+    appointments.find((item) => item.id === appointmentId) ?? params.appointment;
+
+  if (!appointment) {
+    return (
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.centered}
+        refreshControl={refreshControl}
+      >
+        {isLoading ? (
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+        ) : (
+          <Text style={styles.text}>Este agendamento não está mais ativo</Text>
+        )}
+      </ScrollView>
+    );
+  }
 
   return (
-      <View style={styles.container}>
+      <ScrollView style={styles.container} refreshControl={refreshControl}>
         <View style={styles.card}>
           <Text style={styles.title}>
             {appointment.date} às {appointment.time}
@@ -96,7 +121,7 @@ export default function AppointmentDetailsScreen() {
             Cancelar
           </Text>
         </TouchableOpacity>
-      </View>
+      </ScrollView>
   );
 }
 
@@ -107,6 +132,12 @@ const createStyles = (theme: (typeof themes)["light"]) =>
       backgroundColor: theme.colors.background,
       padding: 20,
     },
+
+  centered: {
+    flexGrow: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 
   card: {
     backgroundColor: theme.colors.backgroundSecondary,

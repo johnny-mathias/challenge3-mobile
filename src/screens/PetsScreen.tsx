@@ -10,6 +10,9 @@ import {
 } from 'react-native';
 
 import { useNavigation } from '@react-navigation/native';
+import { useQueryClient } from '@tanstack/react-query';
+
+import ErrorState from '../components/ErrorState';
 
 import {
   useAllOracleAnimals,
@@ -19,6 +22,7 @@ import {
 } from '../hooks/queries';
 import { useAnimalMutations } from '../hooks/useAnimalMutations';
 import { useOracleAnimalMutations } from '../hooks/useOracleAnimalMutations';
+import { useRefreshControl } from '../hooks/useRefreshControl';
 import { useTheme } from '../theme/ThemeProvider';
 import { themes } from '../theme/theme';
 
@@ -62,6 +66,14 @@ export default function PetsScreen() {
   const isLoading = activeQuery.isLoading;
   const isError = activeQuery.isError;
 
+  // Atualizar também refaz a consulta da role: se o Render estava acordando no
+  // login, o admin recupera a área Node/Oracle sem precisar reabrir o app
+  const queryClient = useQueryClient();
+  const refreshControl = useRefreshControl(
+    activeQuery.refetch,
+    () => queryClient.refetchQueries({ queryKey: ['oracle', 'role'] }),
+  );
+
   // No Oracle, o admin só remove os pets vinculados a ele mesmo (T_ANIMAL_RESP)
   const myOracleIds = new Set((oracleAnimals.data ?? []).map((animal) => animal.id));
 
@@ -96,8 +108,8 @@ export default function PetsScreen() {
         text: 'Remover',
         style: 'destructive',
         onPress: () =>
-          onConfirm().catch((error: any) =>
-            Alert.alert('Erro', error?.message ?? 'Não foi possível remover o pet'),
+          onConfirm().catch((error: Error) =>
+            Alert.alert('Não foi possível remover o pet', error.message),
           ),
       },
     ]);
@@ -121,14 +133,17 @@ export default function PetsScreen() {
 
   if (isError) {
     return (
-      <View style={styles.centered}>
-        <Text style={styles.errorText}>
-          {view === 'mine'
+      <ErrorState
+        title={
+          view === 'mine'
             ? 'Não foi possível carregar seus pets'
-            : 'Não foi possível carregar os pets da SuperBicho'}
-        </Text>
+            : 'Não foi possível carregar os pets da SuperBicho'
+        }
+        error={activeQuery.error}
+        onRetry={activeQuery.refetch}
+      >
         {viewToggle}
-      </View>
+      </ErrorState>
     );
   }
 
@@ -137,6 +152,7 @@ export default function PetsScreen() {
       <FlatList
         contentContainerStyle={styles.listContent}
         data={pets}
+        refreshControl={refreshControl}
         keyExtractor={(item) => `${item.source}-${item.animal.id}`}
         ListHeaderComponent={
           <Text style={styles.viewTitle}>{VIEW_TITLES[view]}</Text>
@@ -213,11 +229,6 @@ const createStyles = (theme: (typeof themes)['light']) =>
       alignItems: 'center',
       justifyContent: 'center',
       backgroundColor: theme.colors.background,
-    },
-
-    errorText: {
-      color: theme.colors.textSecondary,
-      fontSize: 15,
     },
 
     listContent: {

@@ -23,7 +23,7 @@ import { useAppointments } from "../context/AppointmentsProvider";
 const { width } = Dimensions.get("window");
 
 export default function HomeScreen() {
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
   const { appointments, isLoading, isError } = useAppointments();
   const theme = useTheme();
   const styles = createStyles(theme);

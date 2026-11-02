@@ -14,7 +14,9 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 
 import { useEffect, useLayoutEffect, useState } from "react";
 
+import ErrorState from "../components/ErrorState";
 import { useAppointments } from "../context/AppointmentsProvider";
+import { useRefreshControl } from "../hooks/useRefreshControl";
 import { useTheme } from "../theme/ThemeProvider";
 import { useApprovedClinics, useMyAnimals } from "../hooks/queries";
 
@@ -30,11 +32,17 @@ export default function AppointmentFormScreen() {
 
   const { createAppointment, updateAppointment, cancelAppointment } = useAppointments();
 
-  const { data: animals = [], isLoading: isLoadingAnimals } = useMyAnimals();
-  const { data: clinics = [] } = useApprovedClinics();
+  const animalsQuery = useMyAnimals();
+  const clinicsQuery = useApprovedClinics();
+  const animals = animalsQuery.data ?? [];
+  const clinics = clinicsQuery.data ?? [];
 
+  const refetchAll = () => Promise.all([animalsQuery.refetch(), clinicsQuery.refetch()]);
+  const refreshControl = useRefreshControl(refetchAll);
+
+  // Só avisa quando a lista carregou de fato vazia (e não quando a API falhou)
   useEffect(() => {
-    if (!isLoadingAnimals && animals.length === 0) {
+    if (animalsQuery.isSuccess && animals.length === 0) {
       Alert.alert(
         "Nenhum pet cadastrado",
         "Você precisa cadastrar um pet antes de criar um agendamento.",
@@ -44,7 +52,7 @@ export default function AppointmentFormScreen() {
         ],
       );
     }
-  }, [isLoadingAnimals, animals.length]);
+  }, [animalsQuery.isSuccess, animals.length]);
 
   const [animalId, setAnimalId] = useState(
     appointment?.animalId?.toString() ?? "",
@@ -109,9 +117,11 @@ export default function AppointmentFormScreen() {
       return;
     }
 
+    // Data local: toISOString() converte para UTC e, à noite, cairia no dia seguinte
+    const pad = (value: number) => String(value).padStart(2, "0");
     const input = {
-      date: date.toISOString().slice(0, 10),
-      time: date.toTimeString().slice(0, 5),
+      date: `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`,
+      time: `${pad(date.getHours())}:${pad(date.getMinutes())}`,
       status: appointment?.status ?? "AGENDADO",
       animalId: parseInt(animalId, 10),
       clinicId: parseInt(clinicId, 10),
@@ -142,9 +152,23 @@ export default function AppointmentFormScreen() {
 
   const styles = createStyles(theme);
 
+  if (animalsQuery.isError || clinicsQuery.isError) {
+    return (
+      <ErrorState
+        title={
+          animalsQuery.isError
+            ? "Não foi possível carregar seus pets"
+            : "Não foi possível carregar as clínicas"
+        }
+        error={animalsQuery.error ?? clinicsQuery.error}
+        onRetry={refetchAll}
+      />
+    );
+  }
+
   return (
     <>
-      <ScrollView style={styles.container}>
+      <ScrollView style={styles.container} refreshControl={refreshControl}>
         <Text style={styles.sectionTitle}>PET</Text>
         <TouchableOpacity
           style={styles.dropdownButton}
@@ -261,18 +285,17 @@ export default function AppointmentFormScreen() {
           value={date}
           mode="date"
           display="spinner"
-          onChange={(event, selectedDate) => {
+          onValueChange={(_event, selectedDate) => {
             setShowDatePicker(false);
-            if (event.type !== "dismissed" && selectedDate) {
-              const updated = new Date(date);
-              updated.setFullYear(
-                selectedDate.getFullYear(),
-                selectedDate.getMonth(),
-                selectedDate.getDate(),
-              );
-              setDate(updated);
-            }
+            const updated = new Date(date);
+            updated.setFullYear(
+              selectedDate.getFullYear(),
+              selectedDate.getMonth(),
+              selectedDate.getDate(),
+            );
+            setDate(updated);
           }}
+          onDismiss={() => setShowDatePicker(false)}
         />
       )}
 
@@ -281,14 +304,13 @@ export default function AppointmentFormScreen() {
           value={date}
           mode="time"
           display="spinner"
-          onChange={(event, selectedDate) => {
+          onValueChange={(_event, selectedDate) => {
             setShowTimePicker(false);
-            if (event.type !== "dismissed" && selectedDate) {
-              const updated = new Date(date);
-              updated.setHours(selectedDate.getHours(), selectedDate.getMinutes());
-              setDate(updated);
-            }
+            const updated = new Date(date);
+            updated.setHours(selectedDate.getHours(), selectedDate.getMinutes());
+            setDate(updated);
           }}
+          onDismiss={() => setShowTimePicker(false)}
         />
       )}
     </>

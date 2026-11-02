@@ -9,17 +9,20 @@ import {
 
 import { useNavigation } from "@react-navigation/native";
 
+import ErrorState from "../components/ErrorState";
 import ServiceRow from "../components/ServiceRow";
 import { useAppointments } from "../context/AppointmentsProvider";
+import { useRefreshControl } from "../hooks/useRefreshControl";
 import { useTheme } from "../theme/ThemeProvider";
 import { themes } from "../theme/theme";
 
 export default function ServicesScreen() {
   const theme = useTheme();
   const styles = createStyles(theme);
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
 
-  const { appointments, isLoading, isError } = useAppointments();
+  const { appointments, isLoading, isError, error, refetch } = useAppointments();
+  const refreshControl = useRefreshControl(refetch);
 
   if (isLoading) {
     return (
@@ -31,9 +34,11 @@ export default function ServicesScreen() {
 
   if (isError) {
     return (
-      <View style={styles.centered}>
-        <Text style={styles.errorText}>Não foi possível carregar seus agendamentos</Text>
-      </View>
+      <ErrorState
+        title="Não foi possível carregar seus agendamentos"
+        error={error}
+        onRetry={refetch}
+      />
     );
   }
 
@@ -44,6 +49,7 @@ export default function ServicesScreen() {
           padding: 20,
         }}
         data={appointments}
+        refreshControl={refreshControl}
         keyExtractor={(item) => item.id.toString()}
         ListEmptyComponent={
           <Text style={styles.emptyText}>
@@ -75,11 +81,6 @@ const createStyles = (theme: (typeof themes)["light"]) =>
       alignItems: "center",
       justifyContent: "center",
       backgroundColor: theme.colors.background,
-    },
-
-    errorText: {
-      color: theme.colors.textSecondary,
-      fontSize: 15,
     },
 
     emptyText: {

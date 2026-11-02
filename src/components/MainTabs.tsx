@@ -25,7 +25,7 @@ export default function MainTabs() {
           borderTopColor: colors.border,
         },
         tabBarIcon: ({ color, size }) => {
-          let iconName: string;
+          let iconName: keyof typeof MaterialIcons.glyphMap;
           switch (route.name) {
             case "HomeScreen":
               iconName = "home";

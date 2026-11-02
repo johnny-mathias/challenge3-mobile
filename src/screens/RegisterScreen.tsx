@@ -11,6 +11,7 @@ import {
 
 import { useNavigation } from '@react-navigation/native';
 
+import { getErrorMessage } from '../api/errors';
 import { useAuth } from '../context/AuthProvider';
 import { useTheme } from '../theme/ThemeProvider';
 import { themes } from '../theme/theme';
@@ -43,7 +44,7 @@ export default function RegisterScreen() {
     try {
       await register(name.trim(), email.trim(), password);
     } catch (error: any) {
-      Alert.alert('Erro ao cadastrar', error?.message ?? 'Não foi possível criar sua conta');
+      Alert.alert('Erro ao cadastrar', getErrorMessage(error));
     } finally {
       setIsSubmitting(false);
     }

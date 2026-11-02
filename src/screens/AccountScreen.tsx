@@ -1,5 +1,7 @@
 import { FlatList, StyleSheet, Text, View } from "react-native";
 
+import { useNavigation } from "@react-navigation/native";
+
 import SettingsRow from "../components/SettingsRow";
 
 import settingsJson from "../data/settings.json";
@@ -21,6 +23,8 @@ export default function AccountScreen() {
   useThemeController();
 
   const { guardian, logout } = useAuth();
+
+  const navigation = useNavigation<any>();
 
   return (
     <View style={styles.container}>
@@ -45,6 +49,12 @@ export default function AccountScreen() {
             }}
           />
         )}
+      />
+
+      <SettingsRow
+        title="Sobre o app"
+        value="›"
+        onPress={() => navigation.navigate("AboutScreen")}
       />
 
       <SettingsRow title="Sair" value="" onPress={logout} />

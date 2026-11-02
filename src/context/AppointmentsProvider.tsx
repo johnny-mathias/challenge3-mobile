@@ -1,4 +1,5 @@
-import { createContext, useContext } from 'react';
+import { createContext, useContext, useEffect } from 'react';
+import { Alert } from 'react-native';
 
 import {
   useMutation,
@@ -14,6 +15,12 @@ import {
   getMyAppointments,
   updateAppointment as updateAppointmentRequest,
 } from '../api/appointments.api';
+import {
+  cancelAppointmentReminder,
+  scheduleAppointmentReminder,
+  setupAppointmentReminders,
+  syncAppointmentReminders,
+} from '../services/appointmentReminders';
 
 import type { AppointmentDTO, AppointmentInput } from '../types/api.types';
 
@@ -26,6 +33,8 @@ interface AppointmentsContextData {
   appointments: AppointmentDTO[];
   isLoading: boolean;
   isError: boolean;
+  error: Error | null;
+  refetch: () => Promise<unknown>;
 
   createAppointment: (data: AppointmentInput) => void;
 
@@ -47,6 +56,8 @@ export function AppointmentsProvider({ children }: any) {
     data: allAppointments = [],
     isLoading,
     isError,
+    error,
+    refetch,
   } = useQuery({
     queryKey: [...APPOINTMENTS_KEY, guardian?.email],
     queryFn: getMyAppointments,
@@ -62,20 +73,56 @@ export function AppointmentsProvider({ children }: any) {
     queryClient.invalidateQueries({ queryKey: APPOINTMENTS_KEY });
   }
 
+  useEffect(() => {
+    setupAppointmentReminders().catch((error) =>
+      console.warn('Lembretes de consulta indisponíveis:', error),
+    );
+  }, []);
+
+  // Lembretes locais acompanham a lista da API (ver services/appointmentReminders)
+  useEffect(() => {
+    if (!isLoading && !isError) {
+      syncAppointmentReminders(appointments).catch(() => {});
+    }
+  }, [allAppointments, isLoading, isError]);
+
+  function alertError(title: string) {
+    return (error: Error) => Alert.alert(title, error.message);
+  }
+
+  function remind(appointment: AppointmentDTO) {
+    // Se o tutor ainda não respondeu à permissão, pergunta na hora de agendar
+    setupAppointmentReminders()
+      .then(() => scheduleAppointmentReminder(appointment, { notifyIfSoon: true }))
+      .catch(() => {});
+  }
+
   const createMutation = useMutation({
     mutationFn: createAppointmentRequest,
-    onSuccess: invalidate,
+    onSuccess: (appointment) => {
+      remind(appointment);
+      invalidate();
+    },
+    onError: alertError('Não foi possível criar o agendamento'),
   });
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: number; data: AppointmentInput }) =>
       updateAppointmentRequest(id, data),
-    onSuccess: invalidate,
+    onSuccess: (appointment) => {
+      remind(appointment);
+      invalidate();
+    },
+    onError: alertError('Não foi possível reagendar'),
   });
 
   const cancelMutation = useMutation({
     mutationFn: (id: number) => cancelAppointmentRequest(id, GUARDIAN_CANCEL_REASON),
-    onSuccess: invalidate,
+    onSuccess: (_appointment, id) => {
+      cancelAppointmentReminder(id).catch(() => {});
+      invalidate();
+    },
+    onError: alertError('Não foi possível cancelar o agendamento'),
   });
 
   return (
@@ -84,6 +131,8 @@ export function AppointmentsProvider({ children }: any) {
         appointments,
         isLoading,
         isError,
+        error,
+        refetch,
         createAppointment: (data) => createMutation.mutate(data),
         updateAppointment: (id, data) => updateMutation.mutate({ id, data }),
         cancelAppointment: (id) => cancelMutation.mutate(id),

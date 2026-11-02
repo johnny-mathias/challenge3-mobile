@@ -17,6 +17,7 @@ import {
 import { auth } from '../config/firebase';
 import { ensureGuardianSession } from '../api/guardianAuth';
 import { getMyGuardian } from '../api/guardians.api';
+import { cancelAllAppointmentReminders } from '../services/appointmentReminders';
 
 import type { GuardianDTO } from '../types/api.types';
 
@@ -91,6 +92,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
   }
 
   async function logout() {
+    await cancelAllAppointmentReminders().catch(() => {});
     await signOut(auth);
     setGuardian(null);
     setSessionExpired(false);
