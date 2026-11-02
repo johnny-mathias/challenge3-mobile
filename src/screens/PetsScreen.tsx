@@ -182,7 +182,7 @@ export default function PetsScreen() {
               <View>
                 <Text style={styles.name}>{item.animal.name}</Text>
                 <Text style={styles.details}>
-                  {item.animal.species} · {t('pets.years', { count: item.animal.age })} · {item.animal.weight}kg
+                  {item.animal.species} · {t(item.animal.age === 1 ? 'pets.year' : 'pets.years', { count: item.animal.age })} · {item.animal.weight}kg
                 </Text>
               </View>
             )}

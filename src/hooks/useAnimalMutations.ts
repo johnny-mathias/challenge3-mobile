@@ -11,8 +11,11 @@ import type { AnimalInput } from '../types/api.types';
 export function useAnimalMutations() {
   const queryClient = useQueryClient();
 
+  // Agendamentos mostram o nome do pet, e a API cancela os agendamentos de um
+  // pet removido: recarregar a lista também remove o lembrete dessas consultas
   function invalidate() {
     queryClient.invalidateQueries({ queryKey: ['animals'] });
+    queryClient.invalidateQueries({ queryKey: ['appointments'] });
   }
 
   const createMutation = useMutation({

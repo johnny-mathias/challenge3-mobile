@@ -96,6 +96,7 @@ export const pt = {
   'pets.loadAllError': 'Não foi possível carregar os pets da SuperBicho',
   'pets.emptyMine': 'Você ainda não cadastrou nenhum pet',
   'pets.emptyAll': 'Nenhum pet registrado na SuperBicho',
+  'pets.year': '{count} ano',
   'pets.years': '{count} anos',
 
   // Formulário de pet (API Java)
@@ -316,6 +317,7 @@ export const en: Record<TranslationKey, string> = {
   'pets.loadAllError': "Couldn't load SuperBicho's pets",
   'pets.emptyMine': "You haven't added any pets yet",
   'pets.emptyAll': 'No pets registered on SuperBicho',
+  'pets.year': '{count} year',
   'pets.years': '{count} years',
 
   'petForm.name': 'Name',

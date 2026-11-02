@@ -158,8 +158,8 @@ COMMIT;
 
 O app é distribuído pelo **Firebase App Distribution**. A versão publicada corresponde ao commit exibido em **Conta → Sobre o app**.
 
-- **Versão publicada:** 1.0.0 (build 1), gerada do commit [`523e3e3`](https://github.com/johnny-mathias/challenge3-mobile/commit/523e3e3b05f8344c2dbfa47f6e620f3640615481)
-- **Link para testers:** [Firebase App Distribution](https://appdistribution.firebase.google.com/testerapps/1:56038513662:android:dffb0fa3bdc14d43a23eaf/releases/59upd0151amtg). O acesso é por convite: o e-mail precisa estar cadastrado como tester no console do Firebase (*App Distribution → Testers & Groups*).
+- **Versão publicada:** 1.0.0 (build 2), gerada do commit [`36fb266`](https://github.com/johnny-mathias/challenge3-mobile/commit/36fb26607cafcbd5a885be7d35e440490be1005a) — o mesmo exibido em **Conta → Sobre o app**
+- **Link para testers:** [Firebase App Distribution](https://appdistribution.firebase.google.com/testerapps/1:56038513662:android:dffb0fa3bdc14d43a23eaf/releases/1mps2ninm76gg). O acesso é por convite: o e-mail precisa estar cadastrado como tester no console do Firebase (*App Distribution → Testers & Groups*).
 - Pacote Android: `com.superbicho.app` (app Android registrado no mesmo projeto Firebase do login)
 - Projeto no Expo: [`@johnny-mathias/SuperBicho`](https://expo.dev/accounts/johnny-mathias/projects/SuperBicho)
 
