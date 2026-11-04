@@ -212,7 +212,7 @@ app.config.js      # Injeta o hash do commit na build (tela "Sobre o app")
 
 **Sprint 3:** https://www.youtube.com/watch?v=FxlKVMKECHE
 
-**Sprint 4:** *(em produção)*
+**Sprint 4:** https://youtu.be/1Gj0D4P9LWc
 
 ## Equipe
 
